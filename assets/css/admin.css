@@ -1,0 +1,28 @@
+.plug-one-admin-panel {
+	max-width: 52rem;
+	margin: 0 0 1.5rem;
+	padding: 1rem 1.25rem;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.plug-one-admin-panel code {
+	display: inline-block;
+	margin-top: 0.25rem;
+	word-break: break-all;
+}
+
+.plug-one-ok {
+	color: #008a20;
+	font-weight: 600;
+}
+
+.plug-one-err {
+	color: #b32d2e;
+	font-weight: 600;
+}
+
+#plug-one-mpesa .plug-one-admin-result {
+	margin-top: 0.5rem;
+}

@@ -1,0 +1,32 @@
+.plug-one-phone-field input,
+.plug-one-phone-input {
+	width: 100%;
+	max-width: 22rem;
+}
+
+.plug-one-waiting {
+	margin: 1.25rem 0;
+	padding: 1rem 1.25rem;
+	border: 1px solid #c8e6c9;
+	background: #f1f8e9;
+	border-radius: 6px;
+}
+
+.plug-one-waiting__status {
+	margin: 0;
+	font-weight: 600;
+}
+
+.plug-one-blocks-phone {
+	margin-top: 0.75rem;
+}
+
+.plug-one-blocks-phone label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-weight: 600;
+}
+
+.plug-one-description {
+	margin: 0 0 0.75rem;
+}
