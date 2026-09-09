@@ -52,3 +52,18 @@ Freemius expects the plugin directory to match the slug when possible:
 - Premium build: `plug-one-lipa-na-m-pesa-premium`
 
 Local Docker may use `plug-one`; rename before production packaging if Freemius warns about the path.
+
+## List / sell on Freemius (no website required)
+
+1. Freemius Dashboard → product **Plug One Lipa Na M-Pesa** → **Plans**: keep a Free plan + Pro pricing (KES or USD).
+2. Set refund policy / trial if you want.
+3. Package locally:
+   ```bash
+   ./bin/package-for-freemius.sh
+   ```
+   Upload `dist/plug-one-lipa-na-m-pesa.zip` → **Deployment** → **Add New Version**.
+4. Download the generated free ZIP from Freemius, install on a clean site, buy/activate Pro, confirm Manual vs STK.
+5. Change release status from **Unreleased** → **Released**.
+6. Share Freemius checkout / product link (Dashboard → Pricing or Marketing). Buyers get license + download email.
+
+Pro is gated at runtime with `can_use_pro()` (license), not Freemius `__premium_only()` code stripping. That is fine while you distribute only via Freemius. WordPress.org can come later.

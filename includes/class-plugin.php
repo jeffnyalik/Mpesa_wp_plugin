@@ -38,6 +38,28 @@ final class Plug_One_Plugin {
 		flush_rewrite_rules();
 	}
 
+	/**
+	 * Cleanup on delete (Freemius after_uninstall — do not use uninstall.php).
+	 */
+	public static function uninstall() {
+		global $wpdb;
+
+		delete_option( 'woocommerce_plug_one_mpesa_settings' );
+		delete_option( 'plug_one_db_version' );
+
+		// OAuth tokens are keyed by consumer key + env hash.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+				$wpdb->esc_like( '_transient_plug_one_mpesa_token_' ) . '%',
+				$wpdb->esc_like( '_transient_timeout_plug_one_mpesa_token_' ) . '%'
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		$table = $wpdb->prefix . 'plug_one_transactions';
+		$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
 	public static function boot() {
 		if ( self::$booted ) {
 			return;

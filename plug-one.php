@@ -96,6 +96,12 @@ if ( function_exists( 'polnmp_fs' ) ) {
 
 	register_activation_hook( __FILE__, array( 'Plug_One_Plugin', 'activate' ) );
 
+	// Freemius forbids uninstall.php; cleanup runs after Freemius reports uninstall.
+	$polnmp_fs_instance = polnmp_fs();
+	if ( is_object( $polnmp_fs_instance ) && method_exists( $polnmp_fs_instance, 'add_action' ) ) {
+		$polnmp_fs_instance->add_action( 'after_uninstall', array( 'Plug_One_Plugin', 'uninstall' ) );
+	}
+
 	add_action(
 		'before_woocommerce_init',
 		static function () {

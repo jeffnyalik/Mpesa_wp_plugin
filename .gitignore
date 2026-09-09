@@ -6,3 +6,4 @@
 composer.lock
 .phpunit.result.cache
 config/licensing.php
+/dist/
