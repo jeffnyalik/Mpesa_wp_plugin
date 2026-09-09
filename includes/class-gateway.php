@@ -66,12 +66,18 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			'payment_mode'      => array(
 				'title'       => __( 'Payment mode', 'plug-one' ),
 				'type'        => 'select',
-				'description' => __( 'STK Push sends a PIN prompt. Manual shows your Paybill/Till and waits for you to confirm.', 'plug-one' ),
-				'default'     => 'stk',
-				'options'     => array(
-					'stk'    => __( 'STK Push (automated)', 'plug-one' ),
-					'manual' => __( 'Manual Paybill / Till', 'plug-one' ),
-				),
+				'description' => Plug_One_Licensing::can_use_pro()
+					? __( 'STK Push sends a PIN prompt. Manual shows your Paybill/Till and waits for you to confirm.', 'plug-one' )
+					: __( 'STK Push requires Pro. Free mode supports Manual Paybill/Till only.', 'plug-one' ),
+				'default'     => Plug_One_Licensing::can_use_pro() ? 'stk' : 'manual',
+				'options'     => Plug_One_Licensing::can_use_pro()
+					? array(
+						'stk'    => __( 'STK Push (automated) — Pro', 'plug-one' ),
+						'manual' => __( 'Manual Paybill / Till — Free', 'plug-one' ),
+					)
+					: array(
+						'manual' => __( 'Manual Paybill / Till — Free', 'plug-one' ),
+					),
 			),
 			'environment'       => array(
 				'title'   => __( 'Daraja environment', 'plug-one' ),
@@ -86,10 +92,10 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 				'title'       => __( 'Transaction type', 'plug-one' ),
 				'type'        => 'select',
 				'description' => __( 'Buy Goods uses your Till as Party B. Paybill uses CustomerPayBillOnline.', 'plug-one' ),
-				'default'     => 'CustomerBuyGoodsOnline',
+				'default'     => 'CustomerPayBillOnline',
 				'options'     => array(
-					'CustomerBuyGoodsOnline' => __( 'Buy Goods / Till (CustomerBuyGoodsOnline)', 'plug-one' ),
 					'CustomerPayBillOnline'  => __( 'Paybill (CustomerPayBillOnline)', 'plug-one' ),
+					'CustomerBuyGoodsOnline' => __( 'Buy Goods / Till (CustomerBuyGoodsOnline)', 'plug-one' ),
 				),
 			),
 			'consumer_key'      => array(
@@ -134,6 +140,10 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 		echo '<p><code>' . esc_html( Plug_One_Callback::url() ) . '</code></p>';
 		echo '<p class="description">' . esc_html__( 'REST fallback:', 'plug-one' ) . ' <code>' . esc_html( Plug_One_Callback::rest_url() ) . '</code></p>';
 		echo '<p><button type="button" class="button" id="plug-one-test-connection">' . esc_html__( 'Test Daraja credentials', 'plug-one' ) . '</button> <span id="plug-one-test-result"></span></p>';
+		echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=plug-one-support' ) ) . '">' . esc_html__( 'Docs, license & support →', 'plug-one' ) . '</a></p>';
+		if ( ! Plug_One_Licensing::can_use_pro() ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Pro license required for STK Push. Manual mode still works.', 'plug-one' ) . '</p></div>';
+		}
 		if ( 'KES' !== get_woocommerce_currency() ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Store currency is not KES. This gateway will stay hidden at checkout until currency is Kenyan Shilling.', 'plug-one' ) . '</p></div>';
 		}
@@ -171,8 +181,14 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			return false;
 		}
 
-		if ( 'stk' === $this->get_option( 'payment_mode', 'stk' ) ) {
+		$mode = $this->get_option( 'payment_mode', 'stk' );
+		if ( 'stk' === $mode && Plug_One_Licensing::can_use_pro() ) {
 			if ( ! $this->get_option( 'consumer_key' ) || ! $this->get_option( 'shortcode' ) ) {
+				return false;
+			}
+		} elseif ( 'stk' === $mode && ! Plug_One_Licensing::can_use_pro() ) {
+			// Stay available; process_payment falls back to manual.
+			if ( ! $this->get_option( 'shortcode' ) && ! $this->get_option( 'party_b' ) ) {
 				return false;
 			}
 		}
@@ -237,7 +253,13 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( Plug_One_Order_Service::META_PHONE, $phone );
 		$order->save();
 
-		if ( 'manual' === $this->get_option( 'payment_mode', 'stk' ) ) {
+		$mode = $this->get_option( 'payment_mode', 'stk' );
+		if ( 'stk' === $mode && ! Plug_One_Licensing::can_use_pro() ) {
+			$mode = 'manual';
+			wc_add_notice( __( 'STK Push requires Pro. Falling back to manual M-Pesa instructions.', 'plug-one' ), 'notice' );
+		}
+
+		if ( 'manual' === $mode ) {
 			$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'pending' );
 			$order->update_status(
 				'on-hold',
@@ -331,7 +353,7 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Phone from classic checkout POST or Blocks paymentMethodData.
+	 * Phone from classic checkout POST or Blocks paymentMethodData / payment_data.
 	 *
 	 * @return string
 	 */
@@ -339,6 +361,20 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 		if ( isset( $_POST['plug_one_phone'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return sanitize_text_field( wp_unslash( $_POST['plug_one_phone'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
+
+		// WooCommerce Blocks / Store API: payment_data[{key,value}, …].
+		if ( isset( $_POST['payment_data'] ) && is_array( $_POST['payment_data'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			foreach ( wp_unslash( $_POST['payment_data'] ) as $row ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				$key = isset( $row['key'] ) ? $row['key'] : '';
+				if ( 'plug_one_phone' === $key && isset( $row['value'] ) ) {
+					return sanitize_text_field( $row['value'] );
+				}
+			}
+		}
+
 		return '';
 	}
 }

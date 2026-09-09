@@ -203,8 +203,8 @@ class Plug_One_Daraja_Client {
 	}
 
 	protected function transaction_type() {
-		$type = $this->get_option( 'transaction_type', 'CustomerBuyGoodsOnline' );
-		return 'CustomerPayBillOnline' === $type ? 'CustomerPayBillOnline' : 'CustomerBuyGoodsOnline';
+		$type = $this->get_option( 'transaction_type', 'CustomerPayBillOnline' );
+		return 'CustomerBuyGoodsOnline' === $type ? 'CustomerBuyGoodsOnline' : 'CustomerPayBillOnline';
 	}
 
 	protected function party_b() {

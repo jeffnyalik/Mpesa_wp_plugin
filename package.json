@@ -4,6 +4,7 @@
 	"description": "Local WordPress + WooCommerce for Plug One M-Pesa (WordPress Playground, no Docker).",
 	"scripts": {
 		"start": "npx --yes @wp-playground/cli@latest start --blueprint=./blueprint.json --port=9400",
-		"start:reset": "npx --yes @wp-playground/cli@latest start --blueprint=./blueprint.json --port=9400 --reset"
+		"start:reset": "npx --yes @wp-playground/cli@latest start --blueprint=./blueprint.json --port=9400 --reset",
+		"test": "bash ./bin/run-tests.sh"
 	}
 }

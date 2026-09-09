@@ -103,6 +103,9 @@ class Plug_One_Admin_Order {
 
 	public static function ajax_resend() {
 		self::guard();
+		if ( ! Plug_One_Licensing::can_use_pro() ) {
+			wp_send_json_error( array( 'message' => __( 'Resend STK requires a Pro license.', 'plug-one' ) ) );
+		}
 		$order = self::order_from_request();
 		$phone = $order->get_meta( Plug_One_Order_Service::META_PHONE );
 		if ( ! Plug_One_Phone::is_valid( $phone ) ) {
@@ -113,6 +116,7 @@ class Plug_One_Admin_Order {
 			$order->update_meta_data( Plug_One_Order_Service::META_STK_AT, 0 );
 			$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'pending' );
 			$order->save();
+			Plug_One_Idempotency::release( 'stk:' . $order->get_id() );
 			$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
 			if ( in_array( $order->get_status(), array( 'failed', 'cancelled' ), true ) ) {
 				$order->update_status( 'pending', __( 'M-Pesa STK Push resent.', 'plug-one' ) );

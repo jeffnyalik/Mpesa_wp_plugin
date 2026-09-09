@@ -33,8 +33,11 @@ class Plug_One_Order_Service {
 			throw new Exception( 'M-Pesa gateway is not available.' );
 		}
 
+		$idem_key = 'stk:' . $order->get_id();
 		$existing = $order->get_meta( self::META_CHECKOUT_ID );
 		$pushed   = (int) $order->get_meta( self::META_STK_AT );
+
+		// Replay within 90s (client double-submit / Blocks retry) — Nest Idempotency-Key pattern.
 		if ( $existing && $pushed && ( time() - $pushed ) < 90 && 'pending' === $order->get_meta( self::META_STATUS ) ) {
 			return array(
 				'checkout_request_id' => $existing,
@@ -42,75 +45,93 @@ class Plug_One_Order_Service {
 			);
 		}
 
-		$amount     = self::order_amount( $order );
-		$account    = self::account_reference( $order );
-		$desc       = self::transaction_desc( $order );
-		$client     = new Plug_One_Daraja_Client( $gateway );
-		$stk        = $client->stk_push(
-			array(
-				'phone'              => $phone,
-				'amount'             => $amount,
-				'account_reference'  => $account,
-				'transaction_desc'   => $desc,
-			)
-		);
-
-		$order->update_meta_data( self::META_PHONE, $phone );
-		$order->update_meta_data( self::META_CHECKOUT_ID, $stk['CheckoutRequestID'] );
-		$order->update_meta_data( self::META_MERCHANT_ID, isset( $stk['MerchantRequestID'] ) ? $stk['MerchantRequestID'] : '' );
-		$order->update_meta_data( self::META_STATUS, 'pending' );
-		$order->update_meta_data( self::META_STK_AT, time() );
-		$order->save();
-
-		Plug_One_Transactions::insert(
-			array(
-				'order_id'            => $order->get_id(),
-				'phone'               => $phone,
-				'amount'              => $amount,
-				'account_reference'   => $account,
-				'merchant_request_id' => isset( $stk['MerchantRequestID'] ) ? $stk['MerchantRequestID'] : '',
-				'checkout_request_id' => $stk['CheckoutRequestID'],
-				'status'              => 'pending',
-				'stk_raw'             => wp_json_encode( $stk ),
-			)
-		);
-
-		if ( function_exists( 'as_schedule_single_action' ) ) {
-			as_schedule_single_action( time() + 70, 'plug_one_query_stk', array( $order->get_id() ), 'plug-one' );
-		} else {
-			wp_schedule_single_event( time() + 70, 'plug_one_query_stk', array( $order->get_id() ) );
+		if ( ! Plug_One_Idempotency::claim( $idem_key, 90 ) ) {
+			if ( $existing ) {
+				return array(
+					'checkout_request_id' => $existing,
+					'customer_message'    => __( 'Please complete M-Pesa payment on your phone.', 'plug-one' ),
+				);
+			}
+			throw new Exception( __( 'A payment request is already in progress for this order. Please wait.', 'plug-one' ) );
 		}
 
-		$order->add_order_note(
-			sprintf(
-				/* translators: 1: phone, 2: checkout request id */
-				__( 'M-Pesa STK Push sent to %1$s. CheckoutRequestID: %2$s', 'plug-one' ),
-				$phone,
-				$stk['CheckoutRequestID']
-			)
-		);
+		try {
+			$amount  = self::order_amount( $order );
+			$account = self::account_reference( $order );
+			$desc    = self::transaction_desc( $order );
+			$client  = new Plug_One_Daraja_Client( $gateway );
+			$stk     = $client->stk_push(
+				array(
+					'phone'             => $phone,
+					'amount'            => $amount,
+					'account_reference' => $account,
+					'transaction_desc'  => $desc,
+				)
+			);
 
-		return array(
-			'checkout_request_id' => $stk['CheckoutRequestID'],
-			'customer_message'    => ! empty( $stk['CustomerMessage'] )
-				? $stk['CustomerMessage']
-				: __( 'Please complete M-Pesa payment on your phone.', 'plug-one' ),
-		);
+			$order->update_meta_data( self::META_PHONE, $phone );
+			$order->update_meta_data( self::META_CHECKOUT_ID, $stk['CheckoutRequestID'] );
+			$order->update_meta_data( self::META_MERCHANT_ID, isset( $stk['MerchantRequestID'] ) ? $stk['MerchantRequestID'] : '' );
+			$order->update_meta_data( self::META_STATUS, 'pending' );
+			$order->update_meta_data( self::META_STK_AT, time() );
+			$order->save();
+
+			Plug_One_Transactions::insert(
+				array(
+					'order_id'            => $order->get_id(),
+					'phone'               => $phone,
+					'amount'              => $amount,
+					'account_reference'   => $account,
+					'merchant_request_id' => isset( $stk['MerchantRequestID'] ) ? $stk['MerchantRequestID'] : '',
+					'checkout_request_id' => $stk['CheckoutRequestID'],
+					'status'              => 'pending',
+					'stk_raw'             => wp_json_encode( $stk ),
+				)
+			);
+
+			if ( function_exists( 'as_schedule_single_action' ) ) {
+				as_schedule_single_action( time() + 70, 'plug_one_query_stk', array( $order->get_id() ), 'plug-one' );
+			} else {
+				wp_schedule_single_event( time() + 70, 'plug_one_query_stk', array( $order->get_id() ) );
+			}
+
+			$order->add_order_note(
+				sprintf(
+					/* translators: 1: phone, 2: checkout request id */
+					__( 'M-Pesa STK Push sent to %1$s. CheckoutRequestID: %2$s', 'plug-one' ),
+					$phone,
+					$stk['CheckoutRequestID']
+				)
+			);
+
+			Plug_One_Idempotency::complete( $idem_key, 90 );
+
+			return array(
+				'checkout_request_id' => $stk['CheckoutRequestID'],
+				'customer_message'    => ! empty( $stk['CustomerMessage'] )
+					? $stk['CustomerMessage']
+					: __( 'Please complete M-Pesa payment on your phone.', 'plug-one' ),
+			);
+		} catch ( Exception $e ) {
+			Plug_One_Idempotency::release( $idem_key );
+			throw $e;
+		}
 	}
 
 	/**
 	 * @param array $payload Raw Daraja callback JSON.
 	 */
 	public static function handle_callback( array $payload ) {
-		$stk = isset( $payload['Body']['stkCallback'] ) ? $payload['Body']['stkCallback'] : null;
-		if ( ! is_array( $stk ) ) {
+		$stk = Plug_One_Callback_Payload::stk_callback( $payload );
+		if ( ! $stk ) {
 			Plug_One_Logger::log( 'callback_invalid', array( 'payload' => $payload ) );
 			return;
 		}
 
-		$checkout_id = isset( $stk['CheckoutRequestID'] ) ? $stk['CheckoutRequestID'] : '';
-		$result_code = isset( $stk['ResultCode'] ) ? $stk['ResultCode'] : '';
-		$result_desc = isset( $stk['ResultDesc'] ) ? $stk['ResultDesc'] : '';
+		$summary     = Plug_One_Callback_Payload::summarize( $stk );
+		$checkout_id = $summary['checkout_id'];
+		$result_code = $summary['result_code'];
+		$result_desc = $summary['result_desc'];
 
 		Plug_One_Logger::log(
 			'callback_received',
@@ -121,6 +142,16 @@ class Plug_One_Order_Service {
 			)
 		);
 
+		if ( ! $checkout_id ) {
+			return;
+		}
+
+		$idem_key = 'callback:' . $checkout_id;
+		if ( Plug_One_Idempotency::is_done( $idem_key ) ) {
+			Plug_One_Logger::log( 'callback_duplicate', array( 'checkoutRequestId' => $checkout_id, 'reason' => 'idem_done' ) );
+			return;
+		}
+
 		$order = self::find_order_by_checkout_id( $checkout_id );
 		if ( ! $order ) {
 			Plug_One_Logger::log( 'callback_orphan', array( 'checkoutRequestId' => $checkout_id, 'resultCode' => $result_code ) );
@@ -128,75 +159,105 @@ class Plug_One_Order_Service {
 		}
 
 		if ( $order->is_paid() ) {
+			Plug_One_Idempotency::complete( $idem_key );
 			Plug_One_Logger::log( 'callback_duplicate', array( 'orderId' => $order->get_id(), 'checkoutRequestId' => $checkout_id ) );
 			return;
 		}
 
-		$order->update_meta_data( self::META_RESULT_CODE, (string) $result_code );
-		$order->update_meta_data( self::META_RESULT_DESC, (string) $result_desc );
-		$order->update_meta_data( self::META_CALLBACK_AT, time() );
+		if ( ! Plug_One_Idempotency::claim( $idem_key, 120 ) ) {
+			Plug_One_Logger::log( 'callback_in_progress', array( 'orderId' => $order->get_id(), 'checkoutRequestId' => $checkout_id ) );
+			return;
+		}
 
-		if ( 0 === (int) $result_code ) {
-			$items   = isset( $stk['CallbackMetadata']['Item'] ) ? $stk['CallbackMetadata']['Item'] : array();
-			$receipt = self::callback_item( $items, 'MpesaReceiptNumber' );
-			$txn_date = self::callback_item( $items, 'TransactionDate' );
-			$amount   = self::callback_item( $items, 'Amount' );
+		try {
+			// Re-load in case a parallel request completed.
+			$order = wc_get_order( $order->get_id() );
+			if ( ! $order || $order->is_paid() ) {
+				Plug_One_Idempotency::complete( $idem_key );
+				return;
+			}
 
-			self::complete( $order, $receipt, 'callback', $txn_date );
+			$order->update_meta_data( self::META_RESULT_CODE, (string) $result_code );
+			$order->update_meta_data( self::META_RESULT_DESC, (string) $result_desc );
+			$order->update_meta_data( self::META_CALLBACK_AT, time() );
+
+			if ( 0 === $result_code ) {
+				$receipt  = $summary['receipt'];
+				$txn_date = $summary['txn_date'];
+				$amount   = $summary['amount'];
+
+				if ( $receipt && self::receipt_already_used( $receipt, $order->get_id() ) ) {
+					Plug_One_Logger::log(
+						'callback_receipt_reuse',
+						array(
+							'orderId' => $order->get_id(),
+							'receipt' => $receipt,
+						)
+					);
+					Plug_One_Idempotency::complete( $idem_key );
+					return;
+				}
+
+				self::complete( $order, $receipt, 'callback', $txn_date );
+
+				Plug_One_Transactions::update_by_checkout(
+					$checkout_id,
+					array(
+						'status'         => 'success',
+						'receipt_number' => $receipt,
+						'result_code'    => (string) $result_code,
+						'result_desc'    => $result_desc,
+						'callback_raw'   => wp_json_encode( $payload ),
+					)
+				);
+
+				Plug_One_Logger::log(
+					'payment_success',
+					array(
+						'orderId'           => $order->get_id(),
+						'checkoutRequestId' => $checkout_id,
+						'receipt'           => $receipt,
+						'amount'            => $amount,
+						'phone'             => $order->get_meta( self::META_PHONE ),
+					)
+				);
+				Plug_One_Idempotency::complete( $idem_key );
+				return;
+			}
+
+			$status = Plug_One_Callback_Payload::failure_status( $result_code );
+			self::fail( $order, $status, $result_desc );
 
 			Plug_One_Transactions::update_by_checkout(
 				$checkout_id,
 				array(
-					'status'         => 'success',
-					'receipt_number' => $receipt,
-					'result_code'    => (string) $result_code,
-					'result_desc'    => $result_desc,
-					'callback_raw'   => wp_json_encode( $payload ),
+					'status'       => $status,
+					'result_code'  => (string) $result_code,
+					'result_desc'  => $result_desc,
+					'callback_raw' => wp_json_encode( $payload ),
 				)
 			);
 
 			Plug_One_Logger::log(
-				'payment_success',
+				'payment_failed',
 				array(
 					'orderId'           => $order->get_id(),
 					'checkoutRequestId' => $checkout_id,
-					'receipt'           => $receipt,
-					'amount'            => $amount,
-					'phone'             => $order->get_meta( self::META_PHONE ),
+					'status'            => $status,
+					'resultCode'        => $result_code,
+					'resultDesc'        => $result_desc,
 				)
 			);
-			return;
+			Plug_One_Idempotency::complete( $idem_key );
+		} catch ( Exception $e ) {
+			Plug_One_Idempotency::release( $idem_key );
+			Plug_One_Logger::log( 'callback_error', array( 'error' => $e->getMessage(), 'checkoutRequestId' => $checkout_id ) );
+			throw $e;
 		}
-
-		$status = 1032 === (int) $result_code ? 'cancelled' : 'failed';
-		self::fail( $order, $status, $result_desc );
-
-		Plug_One_Transactions::update_by_checkout(
-			$checkout_id,
-			array(
-				'status'       => $status,
-				'result_code'  => (string) $result_code,
-				'result_desc'  => $result_desc,
-				'callback_raw' => wp_json_encode( $payload ),
-			)
-		);
-
-		Plug_One_Logger::log(
-			'payment_failed',
-			array(
-				'orderId'           => $order->get_id(),
-				'checkoutRequestId' => $checkout_id,
-				'status'            => $status,
-				'resultCode'        => $result_code,
-				'resultDesc'        => $result_desc,
-			)
-		);
 	}
 
 	/**
 	 * Query Daraja while order is still pending.
-	 * 1032 → cancelled, 1037 → timed_out.
-	 * ResultCode 0 also completes the order (callback-miss fallback; unlike sing_africa).
 	 *
 	 * @param int|WC_Order $order Order or ID.
 	 * @return string Plugin status: pending|success|cancelled|failed|timed_out
@@ -221,6 +282,12 @@ class Plug_One_Order_Service {
 			return (string) $order->get_meta( self::META_STATUS );
 		}
 
+		$idem_key = 'query:' . $checkout_id;
+		if ( ! Plug_One_Idempotency::claim( $idem_key, 15 ) ) {
+			$status = $order->get_meta( self::META_STATUS );
+			return $status ? $status : 'pending';
+		}
+
 		try {
 			$client = new Plug_One_Daraja_Client( $gateway );
 			$query  = $client->query_transaction_status( $checkout_id );
@@ -237,21 +304,30 @@ class Plug_One_Order_Service {
 						'result_desc' => $desc,
 					)
 				);
+				Plug_One_Idempotency::complete( 'callback:' . $checkout_id );
+				Plug_One_Idempotency::release( $idem_key );
 				return 'success';
 			}
 
 			if ( 1032 === $code ) {
 				self::fail( $order, 'cancelled', $desc ? $desc : __( 'Request cancelled by user', 'plug-one' ) );
 				Plug_One_Logger::log( 'payment_query_cancelled', array( 'orderId' => $order->get_id(), 'resultDesc' => $desc ) );
+				Plug_One_Idempotency::complete( 'callback:' . $checkout_id );
+				Plug_One_Idempotency::release( $idem_key );
 				return 'cancelled';
 			}
 
 			if ( 1037 === $code ) {
 				self::fail( $order, 'timed_out', $desc ? $desc : __( 'STK prompt timed out', 'plug-one' ) );
 				Plug_One_Logger::log( 'payment_query_timeout', array( 'orderId' => $order->get_id(), 'resultDesc' => $desc ) );
+				Plug_One_Idempotency::complete( 'callback:' . $checkout_id );
+				Plug_One_Idempotency::release( $idem_key );
 				return 'timed_out';
 			}
+
+			Plug_One_Idempotency::release( $idem_key );
 		} catch ( Exception $e ) {
+			Plug_One_Idempotency::release( $idem_key );
 			Plug_One_Logger::log( 'stk_query_skipped', array( 'orderId' => $order->get_id(), 'error' => $e->getMessage() ) );
 		}
 
@@ -428,17 +504,22 @@ class Plug_One_Order_Service {
 	}
 
 	/**
-	 * @param array  $items CallbackMetadata.Item.
-	 * @param string $name  Item name.
-	 * @return mixed|string
+	 * Prevent applying the same M-Pesa receipt to two orders.
+	 *
+	 * @param string $receipt  Receipt number.
+	 * @param int    $order_id Current order ID.
+	 * @return bool
 	 */
-	protected static function callback_item( array $items, $name ) {
-		foreach ( $items as $item ) {
-			if ( is_array( $item ) && isset( $item['Name'] ) && $item['Name'] === $name ) {
-				return isset( $item['Value'] ) ? $item['Value'] : '';
-			}
-		}
-		return '';
+	protected static function receipt_already_used( $receipt, $order_id ) {
+		$orders = wc_get_orders(
+			array(
+				'limit'      => 1,
+				'meta_key'   => self::META_RECEIPT, // phpcs:ignore WordPress.DB.SlowDBQuery
+				'meta_value' => $receipt, // phpcs:ignore WordPress.DB.SlowDBQuery
+				'exclude'    => array( (int) $order_id ),
+			)
+		);
+		return ! empty( $orders );
 	}
 
 	/**

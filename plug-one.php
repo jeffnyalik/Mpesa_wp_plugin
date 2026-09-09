@@ -3,7 +3,7 @@
  * Plugin Name: Plug One — M-Pesa for WooCommerce
  * Plugin URI: https://example.com/plug-one
  * Description: Accept Lipa Na M-Pesa payments in WooCommerce via Safaricom Daraja STK Push (Buy Goods / Paybill).
- * Version: 1.0.0
+ * Version: 1.2.0
  * Author: Plug One
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PLUG_ONE_VERSION', '1.0.0' );
+define( 'PLUG_ONE_VERSION', '1.2.0' );
 define( 'PLUG_ONE_FILE', __FILE__ );
 define( 'PLUG_ONE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PLUG_ONE_URL', plugin_dir_url( __FILE__ ) );

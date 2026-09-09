@@ -2,6 +2,8 @@
 /**
  * Public Safaricom webhooks (plaintext JSON, no auth) — same contract as NestJS MpesaController.
  *
+ * ACK first so Safaricom stops retrying, then process (shutdown / Action Scheduler).
+ *
  * @package Plug_One
  */
 
@@ -13,6 +15,7 @@ class Plug_One_Callback {
 		add_action( 'woocommerce_api_' . PLUG_ONE_GATEWAY_ID, array( __CLASS__, 'handle_stk' ) );
 		add_action( 'woocommerce_api_' . PLUG_ONE_GATEWAY_ID . '_validation', array( __CLASS__, 'handle_validation' ) );
 		add_action( 'woocommerce_api_' . PLUG_ONE_GATEWAY_ID . '_confirmation', array( __CLASS__, 'handle_confirmation' ) );
+		add_action( 'plug_one_process_callback', array( __CLASS__, 'process_queued' ), 10, 1 );
 	}
 
 	/**
@@ -37,8 +40,8 @@ class Plug_One_Callback {
 	}
 
 	public static function handle_stk() {
-		self::process( self::read_json() );
-		self::respond_accepted();
+		$payload = self::read_json();
+		self::ack_then_process( $payload );
 	}
 
 	/**
@@ -56,7 +59,7 @@ class Plug_One_Callback {
 			$payload = array();
 		}
 
-		self::process( $payload );
+		self::queue_or_process( $payload );
 
 		return new WP_REST_Response(
 			array(
@@ -80,9 +83,35 @@ class Plug_One_Callback {
 	}
 
 	/**
+	 * @param array $payload Callback body (may be stored as JSON string from AS).
+	 */
+	public static function process_queued( $payload ) {
+		if ( is_string( $payload ) ) {
+			$decoded = json_decode( $payload, true );
+			$payload = is_array( $decoded ) ? $decoded : array();
+		}
+		if ( ! is_array( $payload ) ) {
+			return;
+		}
+		self::process( $payload );
+	}
+
+	/**
+	 * Respond 200 Accepted immediately, then process.
+	 *
 	 * @param array $payload Callback body.
 	 */
-	protected static function process( array $payload ) {
+	protected static function ack_then_process( array $payload ) {
+		self::queue_or_process( $payload );
+		self::respond_accepted();
+	}
+
+	/**
+	 * Prefer Action Scheduler; otherwise run after the HTTP response via shutdown.
+	 *
+	 * @param array $payload Callback body.
+	 */
+	protected static function queue_or_process( array $payload ) {
 		$checkout = isset( $payload['Body']['stkCallback']['CheckoutRequestID'] ) ? $payload['Body']['stkCallback']['CheckoutRequestID'] : '';
 		Plug_One_Logger::log(
 			'http_callback',
@@ -92,10 +121,36 @@ class Plug_One_Callback {
 			)
 		);
 
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action(
+				'plug_one_process_callback',
+				array( wp_json_encode( $payload ) ),
+				'plug-one'
+			);
+			return;
+		}
+
+		register_shutdown_function(
+			static function () use ( $payload ) {
+				self::process( $payload );
+			}
+		);
+	}
+
+	/**
+	 * @param array $payload Callback body.
+	 */
+	protected static function process( array $payload ) {
 		try {
 			Plug_One_Order_Service::handle_callback( $payload );
-		} catch ( Exception $e ) {
-			Plug_One_Logger::log( 'callback_error', array( 'error' => $e->getMessage() ) );
+		} catch ( Throwable $e ) {
+			Plug_One_Logger::log(
+				'callback_error',
+				array(
+					'error' => $e->getMessage(),
+					'type'  => get_class( $e ),
+				)
+			);
 		}
 	}
 
@@ -120,6 +175,8 @@ class Plug_One_Callback {
 	protected static function send_json( array $body ) {
 		nocache_headers();
 		status_header( 200 );
-		wp_send_json( $body );
+		header( 'Content-Type: application/json; charset=utf-8' );
+		echo wp_json_encode( $body );
+		exit;
 	}
 }

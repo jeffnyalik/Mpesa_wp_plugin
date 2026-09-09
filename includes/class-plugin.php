@@ -62,6 +62,9 @@ final class Plug_One_Plugin {
 	protected static function load_files() {
 		require_once PLUG_ONE_PATH . 'includes/class-phone.php';
 		require_once PLUG_ONE_PATH . 'includes/class-logger.php';
+		require_once PLUG_ONE_PATH . 'includes/class-idempotency.php';
+		require_once PLUG_ONE_PATH . 'includes/class-callback-payload.php';
+		require_once PLUG_ONE_PATH . 'includes/class-licensing.php';
 		require_once PLUG_ONE_PATH . 'includes/class-transactions.php';
 		require_once PLUG_ONE_PATH . 'includes/class-daraja-client.php';
 		require_once PLUG_ONE_PATH . 'includes/class-order-service.php';
@@ -69,6 +72,7 @@ final class Plug_One_Plugin {
 		require_once PLUG_ONE_PATH . 'includes/class-gateway.php';
 		require_once PLUG_ONE_PATH . 'includes/class-rest.php';
 		require_once PLUG_ONE_PATH . 'includes/class-admin-order.php';
+		require_once PLUG_ONE_PATH . 'includes/class-admin-support.php';
 	}
 
 	public function init() {
@@ -89,9 +93,11 @@ final class Plug_One_Plugin {
 		}
 		add_action( 'plug_one_query_stk', array( 'Plug_One_Order_Service', 'query_and_update' ) );
 
+		Plug_One_Licensing::init();
 		Plug_One_Callback::init();
 		Plug_One_REST::init();
 		Plug_One_Admin_Order::init();
+		Plug_One_Admin_Support::init();
 	}
 
 	public function register_gateway( $gateways ) {

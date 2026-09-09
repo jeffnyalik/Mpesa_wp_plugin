@@ -1,0 +1,23 @@
+{
+	"name": "plug-one/mpesa-woocommerce",
+	"description": "Lipa Na M-Pesa STK Push gateway for WooCommerce",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=7.4"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^9.6"
+	},
+	"suggest": {
+		"freemius/wordpress-sdk": "Required for commercial licensing and auto-updates. Run: composer require freemius/wordpress-sdk"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"PlugOne\\Tests\\": "tests/"
+		}
+	},
+	"scripts": {
+		"test": "phpunit"
+	}
+}

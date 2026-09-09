@@ -2,3 +2,7 @@
 *.log
 .env
 .env.local
+/vendor/
+composer.lock
+.phpunit.result.cache
+config/licensing.php
