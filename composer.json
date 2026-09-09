@@ -4,13 +4,16 @@
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",
 	"require": {
-		"php": ">=7.4"
+		"php": ">=7.4",
+		"freemius/wordpress-sdk": "^2.12"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^9.6"
 	},
-	"suggest": {
-		"freemius/wordpress-sdk": "Required for commercial licensing and auto-updates. Run: composer require freemius/wordpress-sdk"
+	"config": {
+		"allow-plugins": {
+			"freemius/wordpress-sdk": true
+		}
 	},
 	"autoload-dev": {
 		"psr-4": {

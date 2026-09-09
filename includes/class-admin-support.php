@@ -38,7 +38,8 @@ class Plug_One_Admin_Support {
 	}
 
 	public static function render() {
-		$email   = Plug_One_Licensing::config( 'support_email', 'support@example.com' );
+		$email   = Plug_One_Licensing::config( 'support_email', 'jeffnyak@gmail.com' );
+		$phone   = Plug_One_Licensing::config( 'support_phone', '0716431039' );
 		$docs    = Plug_One_Licensing::config( 'docs_url', '' );
 		$pricing = Plug_One_Licensing::pricing_url();
 		$pro     = Plug_One_Licensing::can_use_pro();
@@ -59,12 +60,15 @@ class Plug_One_Admin_Support {
 		if ( $fs_on && $pricing ) {
 			echo '<p><a class="button button-primary" href="' . esc_url( $pricing ) . '">' . esc_html__( 'Upgrade / activate license', 'plug-one' ) . '</a></p>';
 		} elseif ( ! $fs_on ) {
-			echo '<p class="description">' . esc_html__( 'Freemius is not configured yet. All Pro features stay unlocked until you add config/licensing.php and the Freemius SDK (see docs/licensing.md).', 'plug-one' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Freemius SDK not loaded. Run composer install in the plugin folder, then add the secret key to wp-config.php (see Docs → Licensing). Until the SDK loads, Pro features stay unlocked for development.', 'plug-one' ) . '</p>';
 		}
 		echo '</div>';
 
 		echo '<div class="plug-one-admin-panel" style="max-width:720px;margin-top:1rem;">';
 		echo '<h2>' . esc_html__( 'Documentation', 'plug-one' ) . '</h2>';
+		if ( ! $docs ) {
+			echo '<p class="description">' . esc_html__( 'Using bundled docs in the plugin (no public website required).', 'plug-one' ) . '</p>';
+		}
 		echo '<ul style="list-style:disc;margin-left:1.25rem;">';
 		self::doc_link( __( 'Getting started', 'plug-one' ), $docs ? trailingslashit( $docs ) . 'getting-started/' : $local_docs . 'getting-started.md' );
 		self::doc_link( __( 'Paybill vs Till', 'plug-one' ), $docs ? trailingslashit( $docs ) . 'paybill-vs-till/' : $local_docs . 'paybill-vs-till.md' );
@@ -77,8 +81,16 @@ class Plug_One_Admin_Support {
 
 		echo '<div class="plug-one-admin-panel" style="max-width:720px;margin-top:1rem;">';
 		echo '<h2>' . esc_html__( 'Support', 'plug-one' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Email us with your site URL, WooCommerce version, and a copy of the plug-one-mpesa log.', 'plug-one' ) . '</p>';
+		echo '<p>' . esc_html__( 'Contact us with your site URL, WooCommerce version, and a copy of the plug-one-mpesa log.', 'plug-one' ) . '</p>';
 		echo '<p><a class="button" href="mailto:' . esc_attr( $email ) . '?subject=' . rawurlencode( 'Plug One M-Pesa support' ) . '">' . esc_html( $email ) . '</a></p>';
+		if ( $phone ) {
+			$tel = preg_replace( '/\D+/', '', $phone );
+			if ( 0 === strpos( $tel, '0' ) && 10 === strlen( $tel ) ) {
+				$tel = '254' . substr( $tel, 1 );
+			}
+			echo '<p><a class="button" href="tel:+' . esc_attr( $tel ) . '">' . esc_html( $phone ) . '</a></p>';
+			echo '<p class="description">' . esc_html__( 'WhatsApp / call (Kenya). Prefer email for logs and screenshots.', 'plug-one' ) . '</p>';
+		}
 		echo '<p class="description">' . esc_html__( 'Typical response within 1–2 business days for Pro licenses.', 'plug-one' ) . '</p>';
 		echo '</div>';
 

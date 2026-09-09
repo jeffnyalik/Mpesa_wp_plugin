@@ -62,12 +62,20 @@ Paid physical products end as **Processing** (normal WooCommerce). That means pa
 
 ## Licensing (Freemius)
 
-Until you add Freemius credentials, **Pro stays unlocked** for local testing.
+1. `composer install` in this folder (installs `freemius/wordpress-sdk` into `vendor/`)
+2. Add to **WordPress** `wp-config.php` (not this repo):
 
-1. Copy `config/licensing.example.php` → `config/licensing.php`
-2. Create a product in the [Freemius dashboard](https://dashboard.freemius.com/)
-3. `composer require freemius/wordpress-sdk`
-4. See `docs/licensing.md`
+```php
+define( 'WP_FS__DEV_MODE', true );
+define( 'WP_FS__SKIP_EMAIL_ACTIVATION', true );
+define( 'WP_FS__plug-one-lipa-na-m-pesa_SECRET_KEY', 'sk_…' ); // from Freemius dashboard
+```
+
+3. Reactivate the plugin → activate a Freemius test license
+4. Optional: `config/licensing.example.php` → `config/licensing.php` for support email
+
+See `docs/licensing.md`. **Never commit the secret key.**
+
 
 ## Docs & support in WP
 

@@ -1,23 +1,19 @@
 <?php
 /**
- * Example Freemius / support config.
+ * Optional local overrides (gitignored as config/licensing.php).
  *
- * Copy to config/licensing.php (gitignored) and fill in values from
- * https://dashboard.freemius.com/ after creating your product.
+ * Freemius product id + public key live in plug-one.php (official snippet).
+ * Put the Freemius SECRET key in wp-config.php only — see docs/licensing.md.
  *
- * Then install the SDK:
- *   composer require freemius/wordpress-sdk
+ * Docs: leave PLUG_ONE_DOCS_URL empty to use the in-plugin /docs/*.md files
+ * until you have a public website (GitHub Pages is fine later).
  *
  * @package Plug_One
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Freemius product (leave placeholders until you create the product).
-define( 'PLUG_ONE_FS_ID', '0000' );
-define( 'PLUG_ONE_FS_PUBLIC_KEY', 'pk_YOUR_PUBLIC_KEY' );
-
-// Support / docs (shown in WooCommerce → Plug One Help).
-define( 'PLUG_ONE_SUPPORT_EMAIL', 'support@yourdomain.com' );
-define( 'PLUG_ONE_DOCS_URL', 'https://yourdomain.com/docs/plug-one/' ); // or leave empty to use in-plugin /docs
-define( 'PLUG_ONE_PRICING_URL', 'https://yourdomain.com/pricing/' );
+define( 'PLUG_ONE_SUPPORT_EMAIL', 'jeffnyak@gmail.com' );
+define( 'PLUG_ONE_SUPPORT_PHONE', '0716431039' );
+define( 'PLUG_ONE_DOCS_URL', '' ); // empty = ship with plugin /docs
+define( 'PLUG_ONE_PRICING_URL', '' ); // empty = Freemius upgrade URL

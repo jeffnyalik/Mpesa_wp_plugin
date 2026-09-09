@@ -4,7 +4,7 @@ Tags: woocommerce, m-pesa, kenya, payments, daraja
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 8.0
@@ -71,6 +71,11 @@ Callbacks must be reachable on HTTPS at `/wc-api/plug_one_mpesa/`. Use Query sta
 Not in this version. It is M-Pesa (Safaricom) only.
 
 == Changelog ==
+
+= 1.3.0 =
+* Freemius official integration (`polnmp_fs`, product 39188).
+* Composer dependency: freemius/wordpress-sdk.
+* Pro gate uses Freemius `can_use_premium_code()`; secret key via wp-config only.
 
 = 1.2.0 =
 * Freemius-ready licensing (Free manual / Pro STK) with config/licensing.example.php.

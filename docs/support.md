@@ -2,7 +2,8 @@
 
 ## Contact
 
-Email: configure `PLUG_ONE_SUPPORT_EMAIL` in `config/licensing.php` (default placeholder `support@example.com`).
+- **Email:** jeffnyak@gmail.com  
+- **Phone / WhatsApp:** 0716431039  
 
 In WordPress: **WooCommerce → Plug One Help**.
 
@@ -15,13 +16,6 @@ In WordPress: **WooCommerce → Plug One Help**.
 5. Order ID + approximate time  
 6. Relevant lines from `plug-one-mpesa` log (no secrets)
 
-## Channels (recommended for you as seller)
+## Docs without a website
 
-| Channel | Use |
-|---|---|
-| Support email | Primary |
-| Freemius Contact form | Licensed customers |
-| Public docs site | Deflect common questions |
-| GitHub issues | Optional for free/manual users only |
-
-Aim for **1–2 business day** replies on Pro.
+Bundled Markdown lives in the plugin’s `/docs` folder. Leave `PLUG_ONE_DOCS_URL` empty so Help links to those files. Later you can publish the same docs on GitHub Pages and set the URL in `config/licensing.php`.

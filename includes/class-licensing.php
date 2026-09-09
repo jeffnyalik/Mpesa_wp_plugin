@@ -1,12 +1,12 @@
 <?php
 /**
- * Licensing + Freemius bootstrap.
+ * Licensing helpers on top of Freemius (`polnmp_fs`).
  *
  * Free: Manual Paybill/Till.
- * Pro: STK Push, status query automation, admin resend/query helpers.
+ * Pro: STK Push + Pro admin tools (requires active Freemius license).
  *
- * Copy config/licensing.example.php → config/licensing.php (gitignored) after
- * creating a Freemius product, then: composer require freemius/wordpress-sdk
+ * Optional overrides: config/licensing.php (gitignored) for support email / docs URLs.
+ * Secret key goes in wp-config.php only — never in the repo.
  *
  * @package Plug_One
  */
@@ -14,11 +14,6 @@
 defined( 'ABSPATH' ) || exit;
 
 class Plug_One_Licensing {
-
-	/**
-	 * @var object|null Freemius instance.
-	 */
-	protected static $fs = null;
 
 	/**
 	 * @var bool
@@ -32,7 +27,6 @@ class Plug_One_Licensing {
 		self::$booted = true;
 
 		self::maybe_load_config();
-		self::maybe_boot_freemius();
 
 		add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 	}
@@ -52,68 +46,74 @@ class Plug_One_Licensing {
 			return true;
 		}
 
-		// No Freemius product configured yet → unlock for development / soft launch.
-		if ( ! self::is_freemius_configured() ) {
-			return (bool) apply_filters( 'plug_one_pro_unlocked_without_license', true );
+		$fs = self::fs();
+
+		// SDK missing (composer not installed) → unlock for local/dev only.
+		if ( ! $fs ) {
+			return (bool) apply_filters( 'plug_one_pro_unlocked_without_sdk', true );
 		}
 
-		if ( self::$fs && is_object( self::$fs ) && method_exists( self::$fs, 'can_use_premium_code' ) ) {
-			return (bool) self::$fs->can_use_premium_code();
+		if ( is_object( $fs ) && method_exists( $fs, 'can_use_premium_code' ) ) {
+			return (bool) $fs->can_use_premium_code();
 		}
 
 		return false;
 	}
 
 	/**
+	 * Freemius instance is available (SDK loaded).
+	 *
 	 * @return bool
 	 */
 	public static function is_freemius_configured() {
-		$id  = self::config( 'id' );
-		$key = self::config( 'public_key' );
-		if ( ! $id || ! $key ) {
-			return false;
-		}
-		if ( '0000' === (string) $id || 0 === strpos( (string) $key, 'pk_YOUR' ) ) {
-			return false;
-		}
-		return true;
+		return (bool) self::fs();
 	}
 
 	/**
-	 * @return object|null
+	 * @return Freemius|false|null
 	 */
 	public static function fs() {
-		return self::$fs;
+		if ( function_exists( 'polnmp_fs' ) ) {
+			return polnmp_fs();
+		}
+		return null;
 	}
 
 	/**
-	 * Account / pricing URL when Freemius is live.
-	 *
 	 * @return string
 	 */
 	public static function account_url() {
-		if ( self::$fs && method_exists( self::$fs, 'get_account_url' ) ) {
-			return (string) self::$fs->get_account_url();
+		$fs = self::fs();
+		if ( $fs && method_exists( $fs, 'get_account_url' ) ) {
+			return (string) $fs->get_account_url();
 		}
 		return '';
 	}
 
 	/**
-	 * Upgrade / pricing URL.
-	 *
 	 * @return string
 	 */
 	public static function pricing_url() {
-		if ( self::$fs && method_exists( self::$fs, 'get_upgrade_url' ) ) {
-			return (string) self::$fs->get_upgrade_url();
+		$fs = self::fs();
+		if ( $fs && method_exists( $fs, 'get_upgrade_url' ) ) {
+			return (string) $fs->get_upgrade_url();
 		}
-		$docs = self::config( 'pricing_url', '' );
-		return is_string( $docs ) ? $docs : '';
+		$url = self::config( 'pricing_url', '' );
+		return is_string( $url ) ? $url : '';
 	}
 
 	public static function admin_notices() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			return;
+		}
+
+		if ( ! function_exists( 'fs_dynamic_init' ) && current_user_can( 'manage_options' ) ) {
+			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+			if ( $screen && ( false !== strpos( (string) $screen->id, 'woocommerce' ) || 'plugins' === $screen->id ) ) {
+				echo '<div class="notice notice-warning"><p>';
+				echo esc_html__( 'Plug One: Freemius SDK not installed. Run composer require freemius/wordpress-sdk in the plugin folder (Pro stays unlocked until then).', 'plug-one' );
+				echo '</p></div>';
+			}
 		}
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -137,78 +137,6 @@ class Plug_One_Licensing {
 		}
 	}
 
-	protected static function maybe_boot_freemius() {
-		if ( ! self::is_freemius_configured() ) {
-			return;
-		}
-
-		$autoload = PLUG_ONE_PATH . 'vendor/autoload.php';
-		$start    = PLUG_ONE_PATH . 'vendor/freemius/wordpress-sdk/start.php';
-		$legacy   = PLUG_ONE_PATH . 'includes/sdk/freemius/start.php';
-
-		if ( is_readable( $autoload ) ) {
-			require_once $autoload;
-		} elseif ( is_readable( $start ) ) {
-			require_once $start;
-		} elseif ( is_readable( $legacy ) ) {
-			require_once $legacy;
-		}
-
-		if ( ! function_exists( 'fs_dynamic_init' ) ) {
-			add_action(
-				'admin_notices',
-				static function () {
-					if ( ! current_user_can( 'manage_options' ) ) {
-						return;
-					}
-					echo '<div class="notice notice-error"><p>';
-					echo esc_html__( 'Plug One: Freemius credentials are set but the SDK is missing. Run: composer require freemius/wordpress-sdk', 'plug-one' );
-					echo '</p></div>';
-				}
-			);
-			return;
-		}
-
-		if ( ! function_exists( 'plug_one_fs' ) ) {
-			/**
-			 * @return Freemius
-			 */
-			function plug_one_fs() {
-				global $plug_one_fs;
-				if ( ! isset( $plug_one_fs ) ) {
-					$plug_one_fs = fs_dynamic_init(
-						array(
-							'id'                  => Plug_One_Licensing::config( 'id' ),
-							'slug'                => 'plug-one',
-							'premium_slug'        => 'plug-one-pro',
-							'type'                => 'plugin',
-							'public_key'          => Plug_One_Licensing::config( 'public_key' ),
-							'is_premium'          => true,
-							'has_premium_version' => true,
-							'has_paid_plans'      => true,
-							'has_addons'          => false,
-							'is_org_compliant'    => true,
-							'menu'                => array(
-								'slug'    => 'plug-one-support',
-								'contact' => true,
-								'support' => false,
-								'pricing' => true,
-								'account' => true,
-								'parent'  => array(
-									'slug' => 'woocommerce',
-								),
-							),
-						)
-					);
-				}
-				return $plug_one_fs;
-			}
-		}
-
-		self::$fs = plug_one_fs();
-		do_action( 'plug_one_fs_loaded' );
-	}
-
 	/**
 	 * @param string $key     Config key.
 	 * @param mixed  $default Default.
@@ -216,11 +144,10 @@ class Plug_One_Licensing {
 	 */
 	public static function config( $key, $default = '' ) {
 		$map = array(
-			'id'          => defined( 'PLUG_ONE_FS_ID' ) ? PLUG_ONE_FS_ID : '',
-			'public_key'  => defined( 'PLUG_ONE_FS_PUBLIC_KEY' ) ? PLUG_ONE_FS_PUBLIC_KEY : '',
-			'support_email' => defined( 'PLUG_ONE_SUPPORT_EMAIL' ) ? PLUG_ONE_SUPPORT_EMAIL : 'support@example.com',
-			'docs_url'    => defined( 'PLUG_ONE_DOCS_URL' ) ? PLUG_ONE_DOCS_URL : '',
-			'pricing_url' => defined( 'PLUG_ONE_PRICING_URL' ) ? PLUG_ONE_PRICING_URL : '',
+			'support_email' => defined( 'PLUG_ONE_SUPPORT_EMAIL' ) ? PLUG_ONE_SUPPORT_EMAIL : 'jeffnyak@gmail.com',
+			'support_phone' => defined( 'PLUG_ONE_SUPPORT_PHONE' ) ? PLUG_ONE_SUPPORT_PHONE : '0716431039',
+			'docs_url'      => defined( 'PLUG_ONE_DOCS_URL' ) ? PLUG_ONE_DOCS_URL : '',
+			'pricing_url'   => defined( 'PLUG_ONE_PRICING_URL' ) ? PLUG_ONE_PRICING_URL : '',
 		);
 		return isset( $map[ $key ] ) && '' !== $map[ $key ] && null !== $map[ $key ] ? $map[ $key ] : $default;
 	}
