@@ -1,10 +1,10 @@
-=== Plug One — M-Pesa for WooCommerce ===
+=== Plug One Lipa Na M-Pesa ===
 Contributors: plugone
 Tags: woocommerce, m-pesa, kenya, payments, daraja
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 8.0
@@ -14,7 +14,7 @@ Accept Lipa Na M-Pesa in WooCommerce. Free Manual Paybill/Till; optional Pro STK
 
 == Description ==
 
-Plug One is a WooCommerce payment gateway for Kenyan stores using Safaricom M-Pesa.
+Plug One Lipa Na M-Pesa is a WooCommerce payment gateway for Kenyan stores using Safaricom M-Pesa.
 
 **Free:** Manual Paybill / Till — show your number at checkout and confirm payment in admin.
 
@@ -87,6 +87,12 @@ For Pro STK, callbacks must be reachable on HTTPS at `/wc-api/plug_one_mpesa/`. 
 Not in this version. It is M-Pesa (Safaricom) only.
 
 == Changelog ==
+
+= 1.4.2 =
+* WordPress.org: replace languages/.gitkeep with index.php (no hidden files).
+
+= 1.4.1 =
+* WordPress.org scan fixes: Tested up to 7.1, text domain/slug `plug-one-lipa-na-m-pesa`, languages folder.
 
 = 1.4.0 =
 * WordPress.org–ready freemium: `is_org_compliant`, STK paths marked Freemius `__premium_only`.

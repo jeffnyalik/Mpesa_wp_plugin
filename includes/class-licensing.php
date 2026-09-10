@@ -111,7 +111,7 @@ class Plug_One_Licensing {
 			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 			if ( $screen && ( false !== strpos( (string) $screen->id, 'woocommerce' ) || 'plugins' === $screen->id ) ) {
 				echo '<div class="notice notice-warning"><p>';
-				echo esc_html__( 'Plug One: Freemius SDK not installed. Run composer require freemius/wordpress-sdk in the plugin folder. Pro features stay locked until the SDK loads.', 'plug-one' );
+				echo esc_html__( 'Plug One: Freemius SDK not installed. Run composer require freemius/wordpress-sdk in the plugin folder. Pro features stay locked until the SDK loads.', 'plug-one-lipa-na-m-pesa' );
 				echo '</p></div>';
 			}
 		}
@@ -124,8 +124,8 @@ class Plug_One_Licensing {
 		if ( self::is_freemius_configured() && ! self::can_use_pro() ) {
 			$url = self::pricing_url() ? self::pricing_url() : admin_url( 'admin.php?page=plug-one-support' );
 			echo '<div class="notice notice-warning"><p>';
-			echo esc_html__( 'Plug One: STK Push requires an active Pro license. Manual Paybill/Till remains available.', 'plug-one' );
-			echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Activate or upgrade', 'plug-one' ) . '</a>';
+			echo esc_html__( 'Plug One: STK Push requires an active Pro license. Manual Paybill/Till remains available.', 'plug-one-lipa-na-m-pesa' );
+			echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Activate or upgrade', 'plug-one-lipa-na-m-pesa' ) . '</a>';
 			echo '</p></div>';
 		}
 	}

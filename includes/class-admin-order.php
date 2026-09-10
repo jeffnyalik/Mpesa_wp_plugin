@@ -23,7 +23,7 @@ class Plug_One_Admin_Order {
 		foreach ( $screens as $screen ) {
 			add_meta_box(
 				'plug-one-mpesa',
-				__( 'M-Pesa (Plug One)', 'plug-one' ),
+				__( 'M-Pesa (Plug One)', 'plug-one-lipa-na-m-pesa' ),
 				array( __CLASS__, 'render' ),
 				$screen,
 				'side',
@@ -71,7 +71,7 @@ class Plug_One_Admin_Order {
 	public static function render( $post_or_order ) {
 		$order = $post_or_order instanceof WC_Order ? $post_or_order : wc_get_order( $post_or_order->ID );
 		if ( ! $order || PLUG_ONE_GATEWAY_ID !== $order->get_payment_method() ) {
-			echo '<p>' . esc_html__( 'This order did not use Plug One M-Pesa.', 'plug-one' ) . '</p>';
+			echo '<p>' . esc_html__( 'This order did not use Plug One M-Pesa.', 'plug-one-lipa-na-m-pesa' ) . '</p>';
 			return;
 		}
 
@@ -81,10 +81,10 @@ class Plug_One_Admin_Order {
 		$chk     = $order->get_meta( Plug_One_Order_Service::META_CHECKOUT_ID );
 		$desc    = $order->get_meta( Plug_One_Order_Service::META_RESULT_DESC );
 
-		echo '<p><strong>' . esc_html__( 'Status', 'plug-one' ) . ':</strong> ' . esc_html( $status ? $status : '—' ) . '</p>';
-		echo '<p><strong>' . esc_html__( 'Phone', 'plug-one' ) . ':</strong> ' . esc_html( $phone ? $phone : '—' ) . '</p>';
-		echo '<p><strong>' . esc_html__( 'Receipt', 'plug-one' ) . ':</strong> ' . esc_html( $receipt ? $receipt : '—' ) . '</p>';
-		echo '<p><strong>' . esc_html__( 'CheckoutRequestID', 'plug-one' ) . ':</strong><br><code>' . esc_html( $chk ? $chk : '—' ) . '</code></p>';
+		echo '<p><strong>' . esc_html__( 'Status', 'plug-one-lipa-na-m-pesa' ) . ':</strong> ' . esc_html( $status ? $status : '—' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Phone', 'plug-one-lipa-na-m-pesa' ) . ':</strong> ' . esc_html( $phone ? $phone : '—' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Receipt', 'plug-one-lipa-na-m-pesa' ) . ':</strong> ' . esc_html( $receipt ? $receipt : '—' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'CheckoutRequestID', 'plug-one-lipa-na-m-pesa' ) . ':</strong><br><code>' . esc_html( $chk ? $chk : '—' ) . '</code></p>';
 		if ( $desc ) {
 			echo '<p>' . esc_html( $desc ) . '</p>';
 		}
@@ -93,11 +93,11 @@ class Plug_One_Admin_Order {
 			echo '<p>';
 			// Freemius strips Resend STK from the WordPress.org free ZIP.
 			if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only() ) {
-				echo '<button type="button" class="button button-primary plug-one-admin-action" data-action="plug_one_resend_stk" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Resend STK', 'plug-one' ) . '</button> ';
+				echo '<button type="button" class="button button-primary plug-one-admin-action" data-action="plug_one_resend_stk" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Resend STK', 'plug-one-lipa-na-m-pesa' ) . '</button> ';
 			}
-			echo '<button type="button" class="button plug-one-admin-action" data-action="plug_one_query_status" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Query status', 'plug-one' ) . '</button>';
+			echo '<button type="button" class="button plug-one-admin-action" data-action="plug_one_query_status" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Query status', 'plug-one-lipa-na-m-pesa' ) . '</button>';
 			if ( self::can_simulate() ) {
-				echo ' <button type="button" class="button plug-one-admin-action" data-action="plug_one_simulate_payment" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Simulate payment', 'plug-one' ) . '</button>';
+				echo ' <button type="button" class="button plug-one-admin-action" data-action="plug_one_simulate_payment" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Simulate payment', 'plug-one-lipa-na-m-pesa' ) . '</button>';
 			}
 			echo '</p>';
 			echo '<p class="plug-one-admin-result"></p>';
@@ -112,7 +112,7 @@ class Plug_One_Admin_Order {
 			$order = self::order_from_request();
 			$phone = $order->get_meta( Plug_One_Order_Service::META_PHONE );
 			if ( ! Plug_One_Phone::is_valid( $phone ) ) {
-				wp_send_json_error( array( 'message' => __( 'No valid M-Pesa phone on this order.', 'plug-one' ) ) );
+				wp_send_json_error( array( 'message' => __( 'No valid M-Pesa phone on this order.', 'plug-one-lipa-na-m-pesa' ) ) );
 			}
 
 			try {
@@ -122,7 +122,7 @@ class Plug_One_Admin_Order {
 				Plug_One_Idempotency::release( 'stk:' . $order->get_id() );
 				$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
 				if ( in_array( $order->get_status(), array( 'failed', 'cancelled' ), true ) ) {
-					$order->update_status( 'pending', __( 'M-Pesa STK Push resent.', 'plug-one' ) );
+					$order->update_status( 'pending', __( 'M-Pesa STK Push resent.', 'plug-one-lipa-na-m-pesa' ) );
 				}
 				wp_send_json_success( array( 'message' => $result['customer_message'] ) );
 			} catch ( Exception $e ) {
@@ -130,7 +130,7 @@ class Plug_One_Admin_Order {
 			}
 		}
 
-		wp_send_json_error( array( 'message' => __( 'Resend STK requires Pro.', 'plug-one' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Resend STK requires Pro.', 'plug-one-lipa-na-m-pesa' ) ) );
 	}
 
 	public static function ajax_query() {
@@ -141,7 +141,7 @@ class Plug_One_Admin_Order {
 			array(
 				'message' => sprintf(
 					/* translators: %s status */
-					__( 'Status: %s', 'plug-one' ),
+					__( 'Status: %s', 'plug-one-lipa-na-m-pesa' ),
 					$status
 				),
 			)
@@ -160,7 +160,7 @@ class Plug_One_Admin_Order {
 		try {
 			$client = new Plug_One_Daraja_Client( $gateways[ PLUG_ONE_GATEWAY_ID ] );
 			$client->get_access_token();
-			wp_send_json_success( array( 'message' => __( 'Daraja OAuth succeeded.', 'plug-one' ) ) );
+			wp_send_json_success( array( 'message' => __( 'Daraja OAuth succeeded.', 'plug-one-lipa-na-m-pesa' ) ) );
 		} catch ( Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
@@ -169,7 +169,7 @@ class Plug_One_Admin_Order {
 	public static function ajax_simulate() {
 		self::guard();
 		if ( ! self::can_simulate() ) {
-			wp_send_json_error( array( 'message' => __( 'Simulate payment is only available in sandbox / WP_DEBUG.', 'plug-one' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Simulate payment is only available in sandbox / WP_DEBUG.', 'plug-one-lipa-na-m-pesa' ) ) );
 		}
 		$order = self::order_from_request();
 		try {
@@ -178,7 +178,7 @@ class Plug_One_Admin_Order {
 				array(
 					'message' => sprintf(
 						/* translators: %s receipt */
-						__( 'Simulated payment. Receipt: %s', 'plug-one' ),
+						__( 'Simulated payment. Receipt: %s', 'plug-one-lipa-na-m-pesa' ),
 						$receipt
 					),
 				)
@@ -204,7 +204,7 @@ class Plug_One_Admin_Order {
 	protected static function guard() {
 		check_ajax_referer( 'plug_one_admin', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'plug-one' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'plug-one-lipa-na-m-pesa' ) ), 403 );
 		}
 	}
 
@@ -215,7 +215,7 @@ class Plug_One_Admin_Order {
 		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$order    = wc_get_order( $order_id );
 		if ( ! $order ) {
-			wp_send_json_error( array( 'message' => __( 'Order not found.', 'plug-one' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Order not found.', 'plug-one-lipa-na-m-pesa' ) ) );
 		}
 		return $order;
 	}

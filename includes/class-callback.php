@@ -125,7 +125,7 @@ class Plug_One_Callback {
 			as_enqueue_async_action(
 				'plug_one_process_callback',
 				array( wp_json_encode( $payload ) ),
-				'plug-one'
+				'plug-one-lipa-na-m-pesa'
 			);
 			return;
 		}

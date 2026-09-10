@@ -77,7 +77,7 @@ final class Plug_One_Plugin {
 
 	public static function missing_woocommerce() {
 		echo '<div class="notice notice-error"><p>';
-		echo esc_html__( 'Plug One M-Pesa requires WooCommerce to be installed and active.', 'plug-one' );
+		echo esc_html__( 'Plug One M-Pesa requires WooCommerce to be installed and active.', 'plug-one-lipa-na-m-pesa' );
 		echo '</p></div>';
 	}
 
@@ -103,7 +103,7 @@ final class Plug_One_Plugin {
 			update_option( 'plug_one_db_version', PLUG_ONE_VERSION );
 		}
 
-		load_plugin_textdomain( 'plug-one', false, dirname( plugin_basename( PLUG_ONE_FILE ) ) . '/languages' );
+		load_plugin_textdomain( 'plug-one-lipa-na-m-pesa', false, dirname( plugin_basename( PLUG_ONE_FILE ) ) . '/languages' );
 
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'frontend_assets' ) );

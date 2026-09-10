@@ -15,6 +15,12 @@ Docker stack for testing Plug One against WooCommerce.
 
 Opens **http://localhost:8080** (admin / admin), installs WooCommerce, activates this plugin, sets **KES**.
 
+PHP upload limit is raised via `docker/uploads.ini` (64M) so Freemius plugin ZIPs can be uploaded in WP Admin. After changing it:
+
+```bash
+sudo docker compose up -d wordpress
+```
+
 ```bash
 docker compose up -d
 docker compose run --rm wpcli wp plugin list

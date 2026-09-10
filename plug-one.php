@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: Plug One — M-Pesa for WooCommerce
+ * Plugin Name: Plug One Lipa Na M-Pesa
  * Plugin URI: https://github.com/jeffnyalik/Mpesa_wp_plugin
  * Description: Accept Lipa Na M-Pesa in WooCommerce (Manual Paybill/Till free; STK Push with Pro).
- * Version: 1.4.0
+ * Version: 1.4.2
  * Author: Plug One
  * Author URI: https://checkout.freemius.com/plugin/39188/plan/65728/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: plug-one
+ * Text Domain: plug-one-lipa-na-m-pesa
  * Domain Path: /languages
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -89,7 +89,7 @@ if ( function_exists( 'polnmp_fs' ) ) {
 		do_action( 'polnmp_fs_loaded' );
 	}
 
-	define( 'PLUG_ONE_VERSION', '1.4.0' );
+	define( 'PLUG_ONE_VERSION', '1.4.2' );
 	define( 'PLUG_ONE_FILE', __FILE__ );
 	define( 'PLUG_ONE_PATH', plugin_dir_path( __FILE__ ) );
 	define( 'PLUG_ONE_URL', plugin_dir_url( __FILE__ ) );

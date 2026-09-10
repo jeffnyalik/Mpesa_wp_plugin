@@ -27,6 +27,7 @@ for path in \
   config \
   docs \
   includes \
+  languages \
   vendor
 do
   if [[ -e "$ROOT/$path" ]]; then
@@ -34,12 +35,14 @@ do
   fi
 done
 
-# Never ship local overrides.
+# Never ship local overrides or hidden files (WordPress.org forbids them).
 rm -f "$STAGE/config/licensing.php"
+find "$STAGE" -name '.*' -not -path '*/vendor/*' -type f -delete 2>/dev/null || true
+find "$STAGE" -name '.*' -not -path '*/vendor/*' -type d -empty -delete 2>/dev/null || true
 
 (
   cd "$OUT_DIR"
-  zip -rq "${SLUG}.zip" "$SLUG"
+  zip -rq "${SLUG}.zip" "$SLUG" -x '*/.*' '*/*/.*'
 )
 
 echo "OK: ${ZIP}"
