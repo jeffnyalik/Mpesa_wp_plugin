@@ -1,10 +1,11 @@
 <?php
 /**
  * Plugin Name: Plug One — M-Pesa for WooCommerce
- * Plugin URI: https://example.com/plug-one
- * Description: Accept Lipa Na M-Pesa payments in WooCommerce via Safaricom Daraja STK Push (Buy Goods / Paybill).
- * Version: 1.3.0
+ * Plugin URI: https://github.com/jeffnyalik/Mpesa_wp_plugin
+ * Description: Accept Lipa Na M-Pesa in WooCommerce (Manual Paybill/Till free; STK Push with Pro).
+ * Version: 1.4.0
  * Author: Plug One
+ * Author URI: https://checkout.freemius.com/plugin/39188/plan/65728/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: plug-one
@@ -16,6 +17,8 @@
  * WC tested up to: 10.1
  *
  * Independent third-party plugin. Not affiliated with Safaricom PLC, M-Pesa, or Automattic.
+ *
+ * @fs_ignore /vendor/
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -63,8 +66,8 @@ if ( function_exists( 'polnmp_fs' ) ) {
 						'has_premium_version' => true,
 						'has_addons'          => false,
 						'has_paid_plans'      => true,
-						// Not listing free on wordpress.org yet.
-						'is_org_compliant'    => false,
+						// Free ZIP from Freemius is WordPress.org–safe (premium_only STK stripped).
+						'is_org_compliant'    => true,
 						'menu'                => array(
 							'slug'    => 'plug-one-support',
 							'parent'  => array(
@@ -86,7 +89,7 @@ if ( function_exists( 'polnmp_fs' ) ) {
 		do_action( 'polnmp_fs_loaded' );
 	}
 
-	define( 'PLUG_ONE_VERSION', '1.3.0' );
+	define( 'PLUG_ONE_VERSION', '1.4.0' );
 	define( 'PLUG_ONE_FILE', __FILE__ );
 	define( 'PLUG_ONE_PATH', plugin_dir_path( __FILE__ ) );
 	define( 'PLUG_ONE_URL', plugin_dir_url( __FILE__ ) );

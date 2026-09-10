@@ -5,8 +5,8 @@ Helper: `polnmp_fs()` · Free slug `plug-one-lipa-na-m-pesa` · Premium slug `pl
 
 ## Free / Pro split
 
-- **Free / no license:** Manual Paybill/Till
-- **Pro license:** STK Push, callback auto-complete, Resend STK
+- **Free / no license / WordPress.org:** Manual Paybill/Till (STK code stripped from free ZIP)
+- **Pro license (premium ZIP):** STK Push, callback auto-complete, Resend STK
 
 ## Install SDK
 
@@ -33,6 +33,18 @@ Get the secret from Freemius → product → SDK / Keys. If a secret was ever pa
 
 Then deactivate/reactivate the plugin and confirm the Freemius license prompt. Generate a test license in Freemius and activate it.
 
+Local Pro without license (QA only):
+
+```php
+add_filter( 'plug_one_force_pro', '__return_true' );
+```
+
+If Composer/SDK is missing, Pro stays **locked**. To unlock without SDK (dev only):
+
+```php
+add_filter( 'plug_one_pro_unlocked_without_sdk', '__return_true' );
+```
+
 ## Optional support URLs
 
 Copy `config/licensing.example.php` → `config/licensing.php` (gitignored) for support email / public docs URL.
@@ -41,7 +53,7 @@ Copy `config/licensing.example.php` → `config/licensing.php` (gitignored) for 
 
 ```php
 add_filter( 'plug_one_force_pro', '__return_true' ); // staging unlock
-add_filter( 'plug_one_pro_unlocked_without_sdk', '__return_false' ); // lock Pro if SDK missing
+add_filter( 'plug_one_pro_unlocked_without_sdk', '__return_true' ); // unlock Pro if SDK missing (dev only)
 ```
 
 ## Folder name
@@ -53,17 +65,13 @@ Freemius expects the plugin directory to match the slug when possible:
 
 Local Docker may use `plug-one`; rename before production packaging if Freemius warns about the path.
 
-## List / sell on Freemius (no website required)
+## List / sell on Freemius
 
-1. Freemius Dashboard → product **Plug One Lipa Na M-Pesa** → **Plans**: keep a Free plan + Pro pricing (KES or USD).
-2. Set refund policy / trial if you want.
-3. Package locally:
-   ```bash
-   ./bin/package-for-freemius.sh
-   ```
-   Upload `dist/plug-one-lipa-na-m-pesa.zip` → **Deployment** → **Add New Version**.
-4. Download the generated free ZIP from Freemius, install on a clean site, buy/activate Pro, confirm Manual vs STK.
-5. Change release status from **Unreleased** → **Released**.
-6. Share Freemius checkout / product link (Dashboard → Pricing or Marketing). Buyers get license + download email.
+1. Freemius Dashboard → **Plans**: Free + Pro pricing.
+2. Package: `./bin/package-for-freemius.sh` → upload `dist/plug-one-lipa-na-m-pesa.zip`.
+3. Release the version → share free / Pro checkout links.
 
-Pro is gated at runtime with `can_use_pro()` (license), not Freemius `__premium_only()` code stripping. That is fine while you distribute only via Freemius. WordPress.org can come later.
+## WordPress.org
+
+See **[wordpress-org.md](wordpress-org.md)** for the full publish checklist.  
+Short version: deploy on Freemius → download the **generated free ZIP** → submit that to wordpress.org (not the premium ZIP).

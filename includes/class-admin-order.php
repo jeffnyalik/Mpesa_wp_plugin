@@ -91,7 +91,10 @@ class Plug_One_Admin_Order {
 
 		if ( ! $order->is_paid() ) {
 			echo '<p>';
-			echo '<button type="button" class="button button-primary plug-one-admin-action" data-action="plug_one_resend_stk" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Resend STK', 'plug-one' ) . '</button> ';
+			// Freemius strips Resend STK from the WordPress.org free ZIP.
+			if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only() ) {
+				echo '<button type="button" class="button button-primary plug-one-admin-action" data-action="plug_one_resend_stk" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Resend STK', 'plug-one' ) . '</button> ';
+			}
 			echo '<button type="button" class="button plug-one-admin-action" data-action="plug_one_query_status" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Query status', 'plug-one' ) . '</button>';
 			if ( self::can_simulate() ) {
 				echo ' <button type="button" class="button plug-one-admin-action" data-action="plug_one_simulate_payment" data-order="' . esc_attr( $order->get_id() ) . '">' . esc_html__( 'Simulate payment', 'plug-one' ) . '</button>';
@@ -103,28 +106,31 @@ class Plug_One_Admin_Order {
 
 	public static function ajax_resend() {
 		self::guard();
-		if ( ! Plug_One_Licensing::can_use_pro() ) {
-			wp_send_json_error( array( 'message' => __( 'Resend STK requires a Pro license.', 'plug-one' ) ) );
-		}
-		$order = self::order_from_request();
-		$phone = $order->get_meta( Plug_One_Order_Service::META_PHONE );
-		if ( ! Plug_One_Phone::is_valid( $phone ) ) {
-			wp_send_json_error( array( 'message' => __( 'No valid M-Pesa phone on this order.', 'plug-one' ) ) );
+
+		// Freemius strips this entire block from the WordPress.org free ZIP.
+		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->can_use_premium_code__premium_only() ) {
+			$order = self::order_from_request();
+			$phone = $order->get_meta( Plug_One_Order_Service::META_PHONE );
+			if ( ! Plug_One_Phone::is_valid( $phone ) ) {
+				wp_send_json_error( array( 'message' => __( 'No valid M-Pesa phone on this order.', 'plug-one' ) ) );
+			}
+
+			try {
+				$order->update_meta_data( Plug_One_Order_Service::META_STK_AT, 0 );
+				$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'pending' );
+				$order->save();
+				Plug_One_Idempotency::release( 'stk:' . $order->get_id() );
+				$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
+				if ( in_array( $order->get_status(), array( 'failed', 'cancelled' ), true ) ) {
+					$order->update_status( 'pending', __( 'M-Pesa STK Push resent.', 'plug-one' ) );
+				}
+				wp_send_json_success( array( 'message' => $result['customer_message'] ) );
+			} catch ( Exception $e ) {
+				wp_send_json_error( array( 'message' => $e->getMessage() ) );
+			}
 		}
 
-		try {
-			$order->update_meta_data( Plug_One_Order_Service::META_STK_AT, 0 );
-			$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'pending' );
-			$order->save();
-			Plug_One_Idempotency::release( 'stk:' . $order->get_id() );
-			$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
-			if ( in_array( $order->get_status(), array( 'failed', 'cancelled' ), true ) ) {
-				$order->update_status( 'pending', __( 'M-Pesa STK Push resent.', 'plug-one' ) );
-			}
-			wp_send_json_success( array( 'message' => $result['customer_message'] ) );
-		} catch ( Exception $e ) {
-			wp_send_json_error( array( 'message' => $e->getMessage() ) );
-		}
+		wp_send_json_error( array( 'message' => __( 'Resend STK requires Pro.', 'plug-one' ) ) );
 	}
 
 	public static function ajax_query() {

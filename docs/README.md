@@ -9,6 +9,7 @@ Customer-facing and operator docs for **Plug One — M-Pesa for WooCommerce**.
 | [Callbacks & HTTPS](callbacks.md) | Developers / agencies |
 | [Production Till checklist](production-till.md) | Merchants going live with Buy Goods |
 | [Licensing & updates](licensing.md) | You (product owner) + agencies |
+| [WordPress.org publish](wordpress-org.md) | You (free listing + Freemius Pro) |
 | [Troubleshooting](troubleshooting.md) | Support |
 | [Support](support.md) | Everyone |
 | [Secrets & security](security.md) | Developers |

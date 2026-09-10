@@ -48,9 +48,9 @@ class Plug_One_Licensing {
 
 		$fs = self::fs();
 
-		// SDK missing (composer not installed) → unlock for local/dev only.
+		// SDK missing → lock Pro (WordPress.org / production). Local: add_filter( 'plug_one_pro_unlocked_without_sdk', '__return_true' ) or plug_one_force_pro.
 		if ( ! $fs ) {
-			return (bool) apply_filters( 'plug_one_pro_unlocked_without_sdk', true );
+			return (bool) apply_filters( 'plug_one_pro_unlocked_without_sdk', false );
 		}
 
 		if ( is_object( $fs ) && method_exists( $fs, 'can_use_premium_code' ) ) {
@@ -111,7 +111,7 @@ class Plug_One_Licensing {
 			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 			if ( $screen && ( false !== strpos( (string) $screen->id, 'woocommerce' ) || 'plugins' === $screen->id ) ) {
 				echo '<div class="notice notice-warning"><p>';
-				echo esc_html__( 'Plug One: Freemius SDK not installed. Run composer require freemius/wordpress-sdk in the plugin folder (Pro stays unlocked until then).', 'plug-one' );
+				echo esc_html__( 'Plug One: Freemius SDK not installed. Run composer require freemius/wordpress-sdk in the plugin folder. Pro features stay locked until the SDK loads.', 'plug-one' );
 				echo '</p></div>';
 			}
 		}

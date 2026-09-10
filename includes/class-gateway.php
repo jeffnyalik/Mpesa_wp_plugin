@@ -19,7 +19,7 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 	public function __construct() {
 		$this->id                 = PLUG_ONE_GATEWAY_ID;
 		$this->method_title       = __( 'Plug One M-Pesa', 'plug-one' );
-		$this->method_description = __( 'Accept Lipa Na M-Pesa via Safaricom Daraja STK Push (Buy Goods or Paybill).', 'plug-one' );
+		$this->method_description = __( 'Accept Lipa Na M-Pesa via Manual Paybill/Till (free) or Daraja STK Push (Pro).', 'plug-one' );
 		$this->has_fields         = true;
 		$this->icon               = '';
 		$this->supports           = array( 'products' );
@@ -38,6 +38,22 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 	}
 
 	public function init_form_fields() {
+		$mode_options = array(
+			'manual' => __( 'Manual Paybill / Till — Free', 'plug-one' ),
+		);
+		$mode_description = __( 'Manual shows your Paybill/Till and waits for you to confirm payment. Upgrade to Pro for STK Push.', 'plug-one' );
+		$mode_default     = 'manual';
+
+		// Freemius strips this block from the WordPress.org free ZIP.
+		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only() ) {
+			$mode_options = array(
+				'stk'    => __( 'STK Push (automated) — Pro', 'plug-one' ),
+				'manual' => __( 'Manual Paybill / Till — Free', 'plug-one' ),
+			);
+			$mode_description = __( 'STK Push sends a PIN prompt. Manual shows your Paybill/Till and waits for you to confirm.', 'plug-one' );
+			$mode_default     = Plug_One_Licensing::can_use_pro() ? 'stk' : 'manual';
+		}
+
 		$this->form_fields = array(
 			'enabled'           => array(
 				'title'   => __( 'Enable/Disable', 'plug-one' ),
@@ -55,29 +71,20 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			'description'       => array(
 				'title'       => __( 'Description', 'plug-one' ),
 				'type'        => 'textarea',
-				'default'     => __( 'Pay with M-Pesa. You will receive a PIN prompt on your phone.', 'plug-one' ),
+				'default'     => __( 'Pay with M-Pesa using the Paybill/Till shown at checkout, or wait for the PIN prompt if STK is enabled.', 'plug-one' ),
 			),
 			'instructions'      => array(
 				'title'       => __( 'Instructions', 'plug-one' ),
 				'type'        => 'textarea',
 				'description' => __( 'Shown on the thank-you page and in emails for manual payments.', 'plug-one' ),
-				'default'     => __( 'Complete the M-Pesa prompt on your phone to finish this order.', 'plug-one' ),
+				'default'     => __( 'Complete the M-Pesa payment to finish this order.', 'plug-one' ),
 			),
 			'payment_mode'      => array(
 				'title'       => __( 'Payment mode', 'plug-one' ),
 				'type'        => 'select',
-				'description' => Plug_One_Licensing::can_use_pro()
-					? __( 'STK Push sends a PIN prompt. Manual shows your Paybill/Till and waits for you to confirm.', 'plug-one' )
-					: __( 'STK Push requires Pro. Free mode supports Manual Paybill/Till only.', 'plug-one' ),
-				'default'     => Plug_One_Licensing::can_use_pro() ? 'stk' : 'manual',
-				'options'     => Plug_One_Licensing::can_use_pro()
-					? array(
-						'stk'    => __( 'STK Push (automated) — Pro', 'plug-one' ),
-						'manual' => __( 'Manual Paybill / Till — Free', 'plug-one' ),
-					)
-					: array(
-						'manual' => __( 'Manual Paybill / Till — Free', 'plug-one' ),
-					),
+				'description' => $mode_description,
+				'default'     => $mode_default,
+				'options'     => $mode_options,
 			),
 			'environment'       => array(
 				'title'   => __( 'Daraja environment', 'plug-one' ),
@@ -181,13 +188,17 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			return false;
 		}
 
-		$mode = $this->get_option( 'payment_mode', 'stk' );
+		$mode = $this->get_option( 'payment_mode', 'manual' );
 		if ( 'stk' === $mode && Plug_One_Licensing::can_use_pro() ) {
 			if ( ! $this->get_option( 'consumer_key' ) || ! $this->get_option( 'shortcode' ) ) {
 				return false;
 			}
 		} elseif ( 'stk' === $mode && ! Plug_One_Licensing::can_use_pro() ) {
 			// Stay available; process_payment falls back to manual.
+			if ( ! $this->get_option( 'shortcode' ) && ! $this->get_option( 'party_b' ) ) {
+				return false;
+			}
+		} elseif ( 'manual' === $mode ) {
 			if ( ! $this->get_option( 'shortcode' ) && ! $this->get_option( 'party_b' ) ) {
 				return false;
 			}
@@ -201,7 +212,7 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			echo wp_kses_post( wpautop( wptexturize( $this->description ) ) );
 		}
 
-		if ( 'manual' === $this->get_option( 'payment_mode', 'stk' ) ) {
+		if ( 'manual' === $this->get_option( 'payment_mode', 'manual' ) ) {
 			$pay_to = $this->get_option( 'party_b' ) ? $this->get_option( 'party_b' ) : $this->get_option( 'shortcode' );
 			echo '<p>' . esc_html__( 'Paybill / Till:', 'plug-one' ) . ' <strong>' . esc_html( $pay_to ) . '</strong></p>';
 		}
@@ -253,7 +264,7 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( Plug_One_Order_Service::META_PHONE, $phone );
 		$order->save();
 
-		$mode = $this->get_option( 'payment_mode', 'stk' );
+		$mode = $this->get_option( 'payment_mode', 'manual' );
 		if ( 'stk' === $mode && ! Plug_One_Licensing::can_use_pro() ) {
 			$mode = 'manual';
 			wc_add_notice( __( 'STK Push requires Pro. Falling back to manual M-Pesa instructions.', 'plug-one' ), 'notice' );
@@ -276,37 +287,43 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			);
 		}
 
-		$amount = Plug_One_Order_Service::order_amount( $order );
-		if ( $amount < 1 ) {
-			wc_add_notice( __( 'M-Pesa amount must be at least KES 1.', 'plug-one' ), 'error' );
-			return array( 'result' => 'failure' );
+		// Freemius strips STK initiation from the WordPress.org free ZIP.
+		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->can_use_premium_code__premium_only() ) {
+			$amount = Plug_One_Order_Service::order_amount( $order );
+			if ( $amount < 1 ) {
+				wc_add_notice( __( 'M-Pesa amount must be at least KES 1.', 'plug-one' ), 'error' );
+				return array( 'result' => 'failure' );
+			}
+
+			try {
+				$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
+				$order->update_status(
+					'pending',
+					$result['customer_message']
+				);
+				WC()->cart->empty_cart();
+				return array(
+					'result'   => 'success',
+					'redirect' => $this->get_return_url( $order ),
+				);
+			} catch ( Exception $e ) {
+				$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'failed' );
+				$order->update_status( 'failed', $e->getMessage() );
+				Plug_One_Logger::log(
+					'payment_stk_failed',
+					array(
+						'orderId' => $order_id,
+						'phone'   => $phone,
+						'error'   => $e->getMessage(),
+					)
+				);
+				wc_add_notice( __( 'Could not start M-Pesa payment. Please try again or contact the store.', 'plug-one' ), 'error' );
+				return array( 'result' => 'failure' );
+			}
 		}
 
-		try {
-			$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
-			$order->update_status(
-				'pending',
-				$result['customer_message']
-			);
-			WC()->cart->empty_cart();
-			return array(
-				'result'   => 'success',
-				'redirect' => $this->get_return_url( $order ),
-			);
-		} catch ( Exception $e ) {
-			$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'failed' );
-			$order->update_status( 'failed', $e->getMessage() );
-			Plug_One_Logger::log(
-				'payment_stk_failed',
-				array(
-					'orderId' => $order_id,
-					'phone'   => $phone,
-					'error'   => $e->getMessage(),
-				)
-			);
-			wc_add_notice( __( 'Could not start M-Pesa payment. Please try again or contact the store.', 'plug-one' ), 'error' );
-			return array( 'result' => 'failure' );
-		}
+		wc_add_notice( __( 'STK Push is not available in this build. Use Manual mode or upgrade to Pro.', 'plug-one' ), 'error' );
+		return array( 'result' => 'failure' );
 	}
 
 	public function thankyou_instructions( $order_id ) {

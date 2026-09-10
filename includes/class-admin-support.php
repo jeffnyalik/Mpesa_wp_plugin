@@ -60,7 +60,7 @@ class Plug_One_Admin_Support {
 		if ( $fs_on && $pricing ) {
 			echo '<p><a class="button button-primary" href="' . esc_url( $pricing ) . '">' . esc_html__( 'Upgrade / activate license', 'plug-one' ) . '</a></p>';
 		} elseif ( ! $fs_on ) {
-			echo '<p class="description">' . esc_html__( 'Freemius SDK not loaded. Run composer install in the plugin folder, then add the secret key to wp-config.php (see Docs → Licensing). Until the SDK loads, Pro features stay unlocked for development.', 'plug-one' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Freemius SDK not loaded. Run composer install in the plugin folder, then add the secret key to wp-config.php (see Docs → Licensing). Pro stays locked until the SDK loads.', 'plug-one' ) . '</p>';
 		}
 		echo '</div>';
 
