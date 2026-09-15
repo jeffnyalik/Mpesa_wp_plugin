@@ -7,10 +7,3 @@ composer.lock
 .phpunit.result.cache
 config/licensing.php
 /dist/
-
-
-https://entire-matriarch-showy.ngrok-free.dev/wc-api/plug_one_mpesa/
-sudo docker compose down
-sudo docker compose up -d db wordpress
-sudo docker compose logs -f wordpress
-curl -v http://127.0.0.1:8080/

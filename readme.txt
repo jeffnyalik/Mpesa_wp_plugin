@@ -4,7 +4,7 @@ Tags: woocommerce, m-pesa, kenya, payments, daraja
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 8.0
@@ -88,6 +88,9 @@ This free plugin provides Manual Paybill/Till. STK Push ships in a separate Pro 
 Not in this version. It is M-Pesa (Safaricom) only.
 
 == Changelog ==
+
+= 1.5.1 =
+* Distinct Plugin URI (Freemius product) vs Author URI (GitHub profile) for WordPress.org headers.
 
 = 1.5.0 =
 * WordPress.org review: rename for trademark clarity; free package is Manual-only (no locked STK).

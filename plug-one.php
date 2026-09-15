@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Plug One Payment Gateway for M-Pesa
- * Plugin URI: https://github.com/jeffnyalik
+ * Plugin URI: https://github.com/jeffnyalik/Mpesa_wp_plugin
  * Description: WooCommerce payment gateway for M-Pesa — free Manual Paybill/Till; optional Pro STK Push via separate premium build.
- * Version: 1.5.0
+ * Version: 1.5.1
  * Author: Jeff Nyalik
  * Author URI: https://github.com/jeffnyalik
  * License: GPL v2 or later
@@ -91,7 +91,7 @@ if ( function_exists( 'polnmp_fs' ) ) {
 		do_action( 'polnmp_fs_loaded' );
 	}
 
-	define( 'PLUG_ONE_VERSION', '1.5.0' );
+	define( 'PLUG_ONE_VERSION', '1.5.1' );
 	define( 'PLUG_ONE_FILE', __FILE__ );
 	define( 'PLUG_ONE_PATH', plugin_dir_path( __FILE__ ) );
 	define( 'PLUG_ONE_URL', plugin_dir_url( __FILE__ ) );

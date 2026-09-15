@@ -1,28 +1,24 @@
-# Publish on WordPress.org (free) + Freemius (Pro)
+# Distribution notes (GitHub + Freemius)
 
-## Current review status
+Primary distribution is **GitHub (open source)** + **Freemius** (free/Pro ZIPs and licenses).
 
-- **2026-09-10:** Submitted (old name/slug) — automated pass, then human/AI review email (13 Sep) with trademark + locked-features + packaging issues.
-- **1.5.0:** Addresses review: rename, Manual-only free package, sanitization, Daraja verify, external services, no PHPUnit, contributors `jeffnyake`.
+WordPress.org directory review is **paused** (slow freemium review cycle). You can resume later using Freemius’s generated free ZIP.
 
-### Reply checklist
+## Public GitHub checklist
 
-1. Update Freemius product slug to `plug-one-payment-gateway-m-pesa` (if possible).
-2. `./bin/package-for-freemius.sh` → Freemius Deployment → Released.
-3. Download Freemius **free** ZIP only → upload on wordpress.org “Add your plugin” while logged in as **jeffnyake**.
-4. Reply on the **same** review email thread using `docs/review-reply-draft.txt`.
+1. Push latest `master` to `https://github.com/jeffnyalik/Mpesa_wp_plugin`
+2. On GitHub: **Settings → General → Danger Zone → Change repository visibility → Public**
+3. Optional: rename the repo to `plug-one-payment-gateway-m-pesa` (update Plugin URI if you do)
+4. Share README install + Freemius links
 
-Requested slug: `plug-one-payment-gateway-m-pesa`  
-Display name: **Plug One Payment Gateway for M-Pesa**
+## Freemius
 
-## After approval (SVN)
+- Free: https://checkout.freemius.com/plugin/39188/plan/65728/
+- Pro: https://checkout.freemius.com/plugin/39188/plan/65736/
+- Package: `./bin/package-for-freemius.sh`
 
-1. SVN credentials from WordPress.org.
-2. Push free build to `/trunk` and tag `/tags/1.5.0`.
-3. Live URL: `https://wordpress.org/plugins/plug-one-payment-gateway-m-pesa/`
+## If you withdraw the WordPress.org submission
 
-## Links
+Reply on the existing review thread (short):
 
-- Free Freemius plan: https://checkout.freemius.com/plugin/39188/plan/65728/
-- Pro Freemius plan: https://checkout.freemius.com/plugin/39188/plan/65736/
-- Guidelines: https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/
+> Thanks for the review. I’m pausing the WordPress.org directory submission for now and will distribute via GitHub (open source) and Freemius. Please close / withdraw this submission.

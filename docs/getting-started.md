@@ -10,13 +10,13 @@
 
 ## Install
 
-1. Upload `plug-one` to `wp-content/plugins/` and activate.
-2. WooCommerce → Settings → Payments → **Plug One M-Pesa** → Enable.
-3. Choose **Sandbox** or **Production**.
-4. Paste Consumer key, secret, passkey, shortcode.
+1. Upload the plugin folder to `wp-content/plugins/` and activate (or install a Freemius ZIP).
+2. WooCommerce → Settings → Payments → **Plug One Payment Gateway for M-Pesa** → Enable.
+3. For **Manual** (free): enter Paybill/Till (shortcode / Party B).
+4. For **Pro STK**: choose Sandbox or Production, paste Consumer key, secret, passkey, shortcode.
 5. Transaction type: **Paybill** for sandbox `174379`, or **Buy Goods** with a real Till.
-6. Copy the callback URL (`/wc-api/plug_one_mpesa/`) into Daraja / ngrok override.
-7. Click **Test Daraja credentials**.
+6. Copy the callback URL (`/wc-api/plug_one_mpesa/`) into Daraja / ngrok override (Pro).
+7. Click **Test Daraja credentials** (Pro).
 8. Place a test order.
 
 ## Free vs Pro
