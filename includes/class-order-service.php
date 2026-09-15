@@ -28,6 +28,10 @@ class Plug_One_Order_Service {
 	 * @throws Exception If STK fails.
 	 */
 	public static function initiate_stk( WC_Order $order, $phone ) {
+		if ( ! class_exists( 'Plug_One_Daraja_Client' ) ) {
+			throw new Exception( 'Daraja client is not available in this installation.' );
+		}
+
 		$gateway = self::gateway();
 		if ( ! $gateway ) {
 			throw new Exception( 'M-Pesa gateway is not available.' );
@@ -41,7 +45,7 @@ class Plug_One_Order_Service {
 		if ( $existing && $pushed && ( time() - $pushed ) < 90 && 'pending' === $order->get_meta( self::META_STATUS ) ) {
 			return array(
 				'checkout_request_id' => $existing,
-				'customer_message'    => __( 'Please complete M-Pesa payment on your phone.', 'plug-one-lipa-na-m-pesa' ),
+				'customer_message'    => __( 'Please complete M-Pesa payment on your phone.', 'plug-one-payment-gateway-m-pesa' ),
 			);
 		}
 
@@ -49,10 +53,10 @@ class Plug_One_Order_Service {
 			if ( $existing ) {
 				return array(
 					'checkout_request_id' => $existing,
-					'customer_message'    => __( 'Please complete M-Pesa payment on your phone.', 'plug-one-lipa-na-m-pesa' ),
+					'customer_message'    => __( 'Please complete M-Pesa payment on your phone.', 'plug-one-payment-gateway-m-pesa' ),
 				);
 			}
-			throw new Exception( __( 'A payment request is already in progress for this order. Please wait.', 'plug-one-lipa-na-m-pesa' ) );
+			throw new Exception( __( 'A payment request is already in progress for this order. Please wait.', 'plug-one-payment-gateway-m-pesa' ) );
 		}
 
 		try {
@@ -90,7 +94,7 @@ class Plug_One_Order_Service {
 			);
 
 			if ( function_exists( 'as_schedule_single_action' ) ) {
-				as_schedule_single_action( time() + 70, 'plug_one_query_stk', array( $order->get_id() ), 'plug-one-lipa-na-m-pesa' );
+				as_schedule_single_action( time() + 70, 'plug_one_query_stk', array( $order->get_id() ), 'plug-one-payment-gateway-m-pesa' );
 			} else {
 				wp_schedule_single_event( time() + 70, 'plug_one_query_stk', array( $order->get_id() ) );
 			}
@@ -98,7 +102,7 @@ class Plug_One_Order_Service {
 			$order->add_order_note(
 				sprintf(
 					/* translators: 1: phone, 2: checkout request id */
-					__( 'M-Pesa STK Push sent to %1$s. CheckoutRequestID: %2$s', 'plug-one-lipa-na-m-pesa' ),
+					__( 'M-Pesa STK Push sent to %1$s. CheckoutRequestID: %2$s', 'plug-one-payment-gateway-m-pesa' ),
 					$phone,
 					$stk['CheckoutRequestID']
 				)
@@ -110,7 +114,7 @@ class Plug_One_Order_Service {
 				'checkout_request_id' => $stk['CheckoutRequestID'],
 				'customer_message'    => ! empty( $stk['CustomerMessage'] )
 					? $stk['CustomerMessage']
-					: __( 'Please complete M-Pesa payment on your phone.', 'plug-one-lipa-na-m-pesa' ),
+					: __( 'Please complete M-Pesa payment on your phone.', 'plug-one-payment-gateway-m-pesa' ),
 			);
 		} catch ( Exception $e ) {
 			Plug_One_Idempotency::release( $idem_key );
@@ -185,6 +189,40 @@ class Plug_One_Order_Service {
 				$receipt  = $summary['receipt'];
 				$txn_date = $summary['txn_date'];
 				$amount   = $summary['amount'];
+
+				// Do not trust callback alone — confirm with Daraja query when client is available.
+				if ( class_exists( 'Plug_One_Daraja_Client' ) ) {
+					$gateway = self::gateway();
+					if ( $gateway ) {
+						try {
+							$client = new Plug_One_Daraja_Client( $gateway );
+							$query  = $client->query_transaction_status( $checkout_id );
+							$q_code = isset( $query['ResultCode'] ) ? (int) $query['ResultCode'] : -1;
+							if ( 0 !== $q_code ) {
+								Plug_One_Logger::log(
+									'callback_verify_failed',
+									array(
+										'orderId'           => $order->get_id(),
+										'checkoutRequestId' => $checkout_id,
+										'queryResultCode'   => $q_code,
+									)
+								);
+								Plug_One_Idempotency::release( $idem_key );
+								return;
+							}
+						} catch ( Exception $e ) {
+							Plug_One_Logger::log(
+								'callback_verify_error',
+								array(
+									'orderId' => $order->get_id(),
+									'error'   => $e->getMessage(),
+								)
+							);
+							Plug_One_Idempotency::release( $idem_key );
+							return;
+						}
+					}
+				}
 
 				if ( $receipt && self::receipt_already_used( $receipt, $order->get_id() ) ) {
 					Plug_One_Logger::log(
@@ -278,7 +316,7 @@ class Plug_One_Order_Service {
 		}
 
 		$gateway = self::gateway();
-		if ( ! $gateway ) {
+		if ( ! $gateway || ! class_exists( 'Plug_One_Daraja_Client' ) ) {
 			return (string) $order->get_meta( self::META_STATUS );
 		}
 
@@ -310,7 +348,7 @@ class Plug_One_Order_Service {
 			}
 
 			if ( 1032 === $code ) {
-				self::fail( $order, 'cancelled', $desc ? $desc : __( 'Request cancelled by user', 'plug-one-lipa-na-m-pesa' ) );
+				self::fail( $order, 'cancelled', $desc ? $desc : __( 'Request cancelled by user', 'plug-one-payment-gateway-m-pesa' ) );
 				Plug_One_Logger::log( 'payment_query_cancelled', array( 'orderId' => $order->get_id(), 'resultDesc' => $desc ) );
 				Plug_One_Idempotency::complete( 'callback:' . $checkout_id );
 				Plug_One_Idempotency::release( $idem_key );
@@ -318,7 +356,7 @@ class Plug_One_Order_Service {
 			}
 
 			if ( 1037 === $code ) {
-				self::fail( $order, 'timed_out', $desc ? $desc : __( 'STK prompt timed out', 'plug-one-lipa-na-m-pesa' ) );
+				self::fail( $order, 'timed_out', $desc ? $desc : __( 'STK prompt timed out', 'plug-one-payment-gateway-m-pesa' ) );
 				Plug_One_Logger::log( 'payment_query_timeout', array( 'orderId' => $order->get_id(), 'resultDesc' => $desc ) );
 				Plug_One_Idempotency::complete( 'callback:' . $checkout_id );
 				Plug_One_Idempotency::release( $idem_key );
@@ -410,7 +448,7 @@ class Plug_One_Order_Service {
 		$order->add_order_note(
 			sprintf(
 				/* translators: 1: source, 2: receipt */
-				__( 'M-Pesa payment completed via %1$s. Receipt: %2$s', 'plug-one-lipa-na-m-pesa' ),
+				__( 'M-Pesa payment completed via %1$s. Receipt: %2$s', 'plug-one-payment-gateway-m-pesa' ),
 				$source,
 				$receipt ? $receipt : '—'
 			)
@@ -436,7 +474,7 @@ class Plug_One_Order_Service {
 			$wc_status,
 			sprintf(
 				/* translators: 1: plugin status, 2: reason */
-				__( 'M-Pesa %1$s: %2$s', 'plug-one-lipa-na-m-pesa' ),
+				__( 'M-Pesa %1$s: %2$s', 'plug-one-payment-gateway-m-pesa' ),
 				$status,
 				$reason
 			)

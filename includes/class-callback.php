@@ -58,6 +58,7 @@ class Plug_One_Callback {
 		if ( ! is_array( $payload ) ) {
 			$payload = array();
 		}
+		$payload = self::sanitize_payload( $payload );
 
 		self::queue_or_process( $payload );
 
@@ -112,6 +113,7 @@ class Plug_One_Callback {
 	 * @param array $payload Callback body.
 	 */
 	protected static function queue_or_process( array $payload ) {
+		$payload = self::sanitize_payload( $payload );
 		$checkout = isset( $payload['Body']['stkCallback']['CheckoutRequestID'] ) ? $payload['Body']['stkCallback']['CheckoutRequestID'] : '';
 		Plug_One_Logger::log(
 			'http_callback',
@@ -125,7 +127,7 @@ class Plug_One_Callback {
 			as_enqueue_async_action(
 				'plug_one_process_callback',
 				array( wp_json_encode( $payload ) ),
-				'plug-one-lipa-na-m-pesa'
+				'plug-one-payment-gateway-m-pesa'
 			);
 			return;
 		}
@@ -135,6 +137,29 @@ class Plug_One_Callback {
 				self::process( $payload );
 			}
 		);
+	}
+
+	/**
+	 * Sanitize Daraja callback JSON before logging / order meta.
+	 *
+	 * @param array $payload Raw decoded JSON.
+	 * @return array
+	 */
+	public static function sanitize_payload( array $payload ) {
+		$clean = array();
+		foreach ( $payload as $key => $value ) {
+			$key = is_string( $key ) ? sanitize_key( $key ) : $key;
+			if ( is_array( $value ) ) {
+				$clean[ $key ] = self::sanitize_payload( $value );
+			} elseif ( is_int( $value ) || is_float( $value ) ) {
+				$clean[ $key ] = $value;
+			} elseif ( is_bool( $value ) || null === $value ) {
+				$clean[ $key ] = $value;
+			} else {
+				$clean[ $key ] = sanitize_text_field( (string) $value );
+			}
+		}
+		return $clean;
 	}
 
 	/**
@@ -168,8 +193,9 @@ class Plug_One_Callback {
 		if ( ! is_string( $raw ) || '' === $raw ) {
 			return array();
 		}
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via sanitize_payload().
 		$data = json_decode( $raw, true );
-		return is_array( $data ) ? $data : array();
+		return is_array( $data ) ? self::sanitize_payload( $data ) : array();
 	}
 
 	protected static function send_json( array $body ) {

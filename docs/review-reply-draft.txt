@@ -1,0 +1,7 @@
+# WordPress.org review reply (keep short — paste into the same email thread)
+
+Please reserve slug: **plug-one-payment-gateway-m-pesa**
+
+Display name: **Plug One Payment Gateway for M-Pesa**
+
+Updated ZIP uploaded (v1.5.0). Free package is Manual Paybill/Till only; STK lives in the separate Pro package. Callback payloads are sanitized and successful callbacks are verified with Daraja before marking orders paid. External services (Safaricom Daraja + Freemius) are documented in the readme. Contributors set to WordPress.org username jeffnyake; author display name Jeff Nyalik (GitHub jeffnyalik).

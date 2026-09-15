@@ -2,11 +2,8 @@
 /**
  * Licensing helpers on top of Freemius (`polnmp_fs`).
  *
- * Free: Manual Paybill/Till.
- * Pro: STK Push + Pro admin tools (requires active Freemius license).
- *
- * Optional overrides: config/licensing.php (gitignored) for support email / docs URLs.
- * Secret key goes in wp-config.php only — never in the repo.
+ * WordPress.org free build: Manual Paybill/Till only (no locked features in this package).
+ * Pro STK ships in the separate Freemius premium package.
  *
  * @package Plug_One
  */
@@ -32,23 +29,17 @@ class Plug_One_Licensing {
 	}
 
 	/**
-	 * Whether STK Push and Pro admin tools are allowed.
+	 * Whether the premium package may run STK (premium build + valid license / trial).
+	 * Not used to lock features in the WordPress.org free package (STK code is absent there).
 	 *
 	 * @return bool
 	 */
 	public static function can_use_pro() {
-		/**
-		 * Force Pro unlock (local QA). Example: add_filter( 'plug_one_force_pro', '__return_true' );
-		 *
-		 * @param bool $force Default false.
-		 */
 		if ( apply_filters( 'plug_one_force_pro', false ) ) {
 			return true;
 		}
 
 		$fs = self::fs();
-
-		// SDK missing → lock Pro (WordPress.org / production). Local: add_filter( 'plug_one_pro_unlocked_without_sdk', '__return_true' ) or plug_one_force_pro.
 		if ( ! $fs ) {
 			return (bool) apply_filters( 'plug_one_pro_unlocked_without_sdk', false );
 		}
@@ -61,8 +52,6 @@ class Plug_One_Licensing {
 	}
 
 	/**
-	 * Freemius instance is available (SDK loaded).
-	 *
 	 * @return bool
 	 */
 	public static function is_freemius_configured() {
@@ -107,26 +96,18 @@ class Plug_One_Licensing {
 			return;
 		}
 
-		if ( ! function_exists( 'fs_dynamic_init' ) && current_user_can( 'manage_options' ) ) {
+		// Premium package only: nudge to activate license (STK code exists only there).
+		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only() ) {
 			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 			if ( $screen && ( false !== strpos( (string) $screen->id, 'woocommerce' ) || 'plugins' === $screen->id ) ) {
-				echo '<div class="notice notice-warning"><p>';
-				echo esc_html__( 'Plug One: Freemius SDK not installed. Run composer require freemius/wordpress-sdk in the plugin folder. Pro features stay locked until the SDK loads.', 'plug-one-lipa-na-m-pesa' );
-				echo '</p></div>';
+				if ( self::is_freemius_configured() && ! self::can_use_pro() ) {
+					$url = self::pricing_url() ? self::pricing_url() : admin_url( 'admin.php?page=plug-one-support' );
+					echo '<div class="notice notice-warning"><p>';
+					echo esc_html__( 'Plug One Pro: activate your license to enable STK Push.', 'plug-one-payment-gateway-m-pesa' );
+					echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Activate or upgrade', 'plug-one-payment-gateway-m-pesa' ) . '</a>';
+					echo '</p></div>';
+				}
 			}
-		}
-
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || ( false === strpos( (string) $screen->id, 'woocommerce' ) && 'plugins' !== $screen->id ) ) {
-			return;
-		}
-
-		if ( self::is_freemius_configured() && ! self::can_use_pro() ) {
-			$url = self::pricing_url() ? self::pricing_url() : admin_url( 'admin.php?page=plug-one-support' );
-			echo '<div class="notice notice-warning"><p>';
-			echo esc_html__( 'Plug One: STK Push requires an active Pro license. Manual Paybill/Till remains available.', 'plug-one-lipa-na-m-pesa' );
-			echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Activate or upgrade', 'plug-one-lipa-na-m-pesa' ) . '</a>';
-			echo '</p></div>';
 		}
 	}
 

@@ -25,7 +25,7 @@
 				if (!String(phone || '').replace(/\D/g, '')) {
 					return {
 						type: emitResponse.responseTypes.ERROR,
-						message: __('Enter a valid Kenyan M-Pesa mobile number.', 'plug-one-lipa-na-m-pesa'),
+						message: __('Enter a valid Kenyan M-Pesa mobile number.', 'plug-one-payment-gateway-m-pesa'),
 					};
 				}
 				return {
@@ -49,7 +49,7 @@
 			createElement(
 				'label',
 				{ htmlFor: 'plug-one-blocks-phone' },
-				__('M-Pesa phone number', 'plug-one-lipa-na-m-pesa')
+				__('M-Pesa phone number', 'plug-one-payment-gateway-m-pesa')
 			),
 			createElement('input', {
 				id: 'plug-one-blocks-phone',

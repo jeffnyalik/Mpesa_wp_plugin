@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: Plug One Lipa Na M-Pesa
- * Plugin URI: https://github.com/jeffnyalik/Mpesa_wp_plugin
- * Description: Accept Lipa Na M-Pesa in WooCommerce (Manual Paybill/Till free; STK Push with Pro).
- * Version: 1.4.2
- * Author: Plug One
- * Author URI: https://checkout.freemius.com/plugin/39188/plan/65728/
+ * Plugin Name: Plug One Payment Gateway for M-Pesa
+ * Plugin URI: https://github.com/jeffnyalik
+ * Description: WooCommerce payment gateway for M-Pesa — free Manual Paybill/Till; optional Pro STK Push via separate premium build.
+ * Version: 1.5.0
+ * Author: Jeff Nyalik
+ * Author URI: https://github.com/jeffnyalik
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: plug-one-lipa-na-m-pesa
+ * Text Domain: plug-one-payment-gateway-m-pesa
  * Domain Path: /languages
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -16,9 +16,11 @@
  * WC requires at least: 8.0
  * WC tested up to: 10.1
  *
- * Independent third-party plugin. Not affiliated with Safaricom PLC, M-Pesa, or Automattic.
+ * Independent third-party plugin. Not affiliated with, endorsed by, or sponsored by Safaricom PLC or Automattic.
+ * “M-Pesa”, “Safaricom”, and “Daraja” are trademarks of their respective owners.
  *
  * @fs_ignore /vendor/
+ * @fs_premium_only /includes/class-daraja-client.php
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -36,7 +38,7 @@ if ( function_exists( 'polnmp_fs' ) ) {
 	 */
 	if ( ! function_exists( 'polnmp_fs' ) ) {
 		/**
-		 * Freemius SDK accessor (Plug One Lipa Na M-Pesa).
+		 * Freemius SDK accessor.
 		 *
 		 * @return Freemius|false
 		 */
@@ -57,16 +59,16 @@ if ( function_exists( 'polnmp_fs' ) ) {
 				$polnmp_fs = fs_dynamic_init(
 					array(
 						'id'                  => '39188',
-						'slug'                => 'plug-one-lipa-na-m-pesa',
-						'premium_slug'        => 'plug-one-lipa-na-m-pesa-premium',
+						'slug'                => 'plug-one-payment-gateway-m-pesa',
+						'premium_slug'        => 'plug-one-payment-gateway-m-pesa-premium',
 						'type'                => 'plugin',
 						'public_key'          => 'pk_852cd4cf63b0100e24aa0ec63d65c',
+						// Source tree is the premium codebase; Freemius free ZIP rewrites this to false.
 						'is_premium'          => true,
 						'premium_suffix'      => 'Pro',
 						'has_premium_version' => true,
 						'has_addons'          => false,
 						'has_paid_plans'      => true,
-						// Free ZIP from Freemius is WordPress.org–safe (premium_only STK stripped).
 						'is_org_compliant'    => true,
 						'menu'                => array(
 							'slug'    => 'plug-one-support',
@@ -89,7 +91,7 @@ if ( function_exists( 'polnmp_fs' ) ) {
 		do_action( 'polnmp_fs_loaded' );
 	}
 
-	define( 'PLUG_ONE_VERSION', '1.4.2' );
+	define( 'PLUG_ONE_VERSION', '1.5.0' );
 	define( 'PLUG_ONE_FILE', __FILE__ );
 	define( 'PLUG_ONE_PATH', plugin_dir_path( __FILE__ ) );
 	define( 'PLUG_ONE_URL', plugin_dir_url( __FILE__ ) );
@@ -99,7 +101,6 @@ if ( function_exists( 'polnmp_fs' ) ) {
 
 	register_activation_hook( __FILE__, array( 'Plug_One_Plugin', 'activate' ) );
 
-	// Freemius forbids uninstall.php; cleanup runs after Freemius reports uninstall.
 	$polnmp_fs_instance = polnmp_fs();
 	if ( is_object( $polnmp_fs_instance ) && method_exists( $polnmp_fs_instance, 'add_action' ) ) {
 		$polnmp_fs_instance->add_action( 'after_uninstall', array( 'Plug_One_Plugin', 'uninstall' ) );

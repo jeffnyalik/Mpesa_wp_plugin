@@ -77,7 +77,7 @@ final class Plug_One_Plugin {
 
 	public static function missing_woocommerce() {
 		echo '<div class="notice notice-error"><p>';
-		echo esc_html__( 'Plug One M-Pesa requires WooCommerce to be installed and active.', 'plug-one-lipa-na-m-pesa' );
+		echo esc_html__( 'Plug One M-Pesa requires WooCommerce to be installed and active.', 'plug-one-payment-gateway-m-pesa' );
 		echo '</p></div>';
 	}
 
@@ -88,7 +88,10 @@ final class Plug_One_Plugin {
 		require_once PLUG_ONE_PATH . 'includes/class-callback-payload.php';
 		require_once PLUG_ONE_PATH . 'includes/class-licensing.php';
 		require_once PLUG_ONE_PATH . 'includes/class-transactions.php';
-		require_once PLUG_ONE_PATH . 'includes/class-daraja-client.php';
+		// Premium-only (stripped from WordPress.org free ZIP via @fs_premium_only).
+		if ( file_exists( PLUG_ONE_PATH . 'includes/class-daraja-client.php' ) ) {
+			require_once PLUG_ONE_PATH . 'includes/class-daraja-client.php';
+		}
 		require_once PLUG_ONE_PATH . 'includes/class-order-service.php';
 		require_once PLUG_ONE_PATH . 'includes/class-callback.php';
 		require_once PLUG_ONE_PATH . 'includes/class-gateway.php';
@@ -102,8 +105,6 @@ final class Plug_One_Plugin {
 			Plug_One_Transactions::install();
 			update_option( 'plug_one_db_version', PLUG_ONE_VERSION );
 		}
-
-		load_plugin_textdomain( 'plug-one-lipa-na-m-pesa', false, dirname( plugin_basename( PLUG_ONE_FILE ) ) . '/languages' );
 
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'frontend_assets' ) );

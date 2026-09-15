@@ -43,13 +43,17 @@ class Plug_One_Callback_Payload {
 			? $stk['CallbackMetadata']['Item']
 			: array();
 
+		$receipt  = self::metadata_item( $items, 'MpesaReceiptNumber' );
+		$amount   = self::metadata_item( $items, 'Amount' );
+		$txn_date = self::metadata_item( $items, 'TransactionDate' );
+
 		return array(
-			'checkout_id' => isset( $stk['CheckoutRequestID'] ) ? (string) $stk['CheckoutRequestID'] : '',
+			'checkout_id' => isset( $stk['CheckoutRequestID'] ) ? sanitize_text_field( (string) $stk['CheckoutRequestID'] ) : '',
 			'result_code' => isset( $stk['ResultCode'] ) ? (int) $stk['ResultCode'] : -1,
-			'result_desc' => isset( $stk['ResultDesc'] ) ? (string) $stk['ResultDesc'] : '',
-			'receipt'     => (string) self::metadata_item( $items, 'MpesaReceiptNumber' ),
-			'amount'      => self::metadata_item( $items, 'Amount' ),
-			'txn_date'    => self::metadata_item( $items, 'TransactionDate' ),
+			'result_desc' => isset( $stk['ResultDesc'] ) ? sanitize_text_field( (string) $stk['ResultDesc'] ) : '',
+			'receipt'     => sanitize_text_field( (string) $receipt ),
+			'amount'      => is_numeric( $amount ) ? $amount : sanitize_text_field( (string) $amount ),
+			'txn_date'    => sanitize_text_field( (string) $txn_date ),
 		);
 	}
 

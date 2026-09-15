@@ -74,7 +74,7 @@ Paid physical products end as **Processing** (normal WooCommerce). That means pa
 ```php
 define( 'WP_FS__DEV_MODE', true );
 define( 'WP_FS__SKIP_EMAIL_ACTIVATION', true );
-define( 'WP_FS__plug-one-lipa-na-m-pesa_SECRET_KEY', 'sk_…' ); // from Freemius dashboard
+define( 'WP_FS__plug-one-payment-gateway-m-pesa_SECRET_KEY', 'sk_…' ); // from Freemius dashboard
 ```
 
 3. Reactivate the plugin → activate a Freemius test license

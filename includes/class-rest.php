@@ -101,17 +101,17 @@ class Plug_One_REST {
 		}
 
 		$paid = $order && $order->is_paid();
-		$msg  = __( 'Waiting for M-Pesa payment…', 'plug-one-lipa-na-m-pesa' );
+		$msg  = __( 'Waiting for M-Pesa payment…', 'plug-one-payment-gateway-m-pesa' );
 		if ( $paid ) {
-			$msg = __( 'Payment received.', 'plug-one-lipa-na-m-pesa' );
+			$msg = __( 'Payment received.', 'plug-one-payment-gateway-m-pesa' );
 		} elseif ( 'cancelled' === $status ) {
-			$msg = __( 'Payment was cancelled on the phone.', 'plug-one-lipa-na-m-pesa' );
+			$msg = __( 'Payment was cancelled on the phone.', 'plug-one-payment-gateway-m-pesa' );
 		} elseif ( 'timed_out' === $status ) {
-			$msg = __( 'The M-Pesa prompt timed out. Place the order again.', 'plug-one-lipa-na-m-pesa' );
+			$msg = __( 'The M-Pesa prompt timed out. Place the order again.', 'plug-one-payment-gateway-m-pesa' );
 		} elseif ( 'failed' === $status ) {
 			$msg = $order->get_meta( Plug_One_Order_Service::META_RESULT_DESC );
 			if ( ! $msg ) {
-				$msg = __( 'Payment failed.', 'plug-one-lipa-na-m-pesa' );
+				$msg = __( 'Payment failed.', 'plug-one-payment-gateway-m-pesa' );
 			}
 		}
 

@@ -38,7 +38,7 @@ final class Plug_One_Blocks extends AbstractPaymentMethodType {
 		);
 
 		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'plug-one-blocks', 'plug-one-lipa-na-m-pesa' );
+			wp_set_script_translations( 'plug-one-blocks', 'plug-one-payment-gateway-m-pesa' );
 		}
 
 		return array( 'plug-one-blocks' );
@@ -51,7 +51,7 @@ final class Plug_One_Blocks extends AbstractPaymentMethodType {
 		}
 
 		return array(
-			'title'        => isset( $this->settings['title'] ) ? $this->settings['title'] : __( 'M-Pesa', 'plug-one-lipa-na-m-pesa' ),
+			'title'        => isset( $this->settings['title'] ) ? $this->settings['title'] : __( 'M-Pesa', 'plug-one-payment-gateway-m-pesa' ),
 			'description'  => isset( $this->settings['description'] ) ? $this->settings['description'] : '',
 			'supports'     => array( 'products' ),
 			'billingPhone' => $phone,
