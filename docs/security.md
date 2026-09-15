@@ -1,23 +1,11 @@
 # Secrets & security
 
-## Never commit
+Never commit:
 
-- `config/licensing.php` (use `licensing.example.php` only)
-- Daraja Consumer secret / passkey
-- Freemius **secret** key (`sk_…`)
-- `.env` files
-- ngrok auth tokens
-- Real customer phone numbers in screenshots/logs shared publicly
+- Daraja Consumer Secret / Passkey
+- Production API credentials
+- Local overrides in `config/licensing.php`
 
-## Safe to commit
+Use the WooCommerce payment settings UI or environment-specific config outside git.
 
-- `config/licensing.example.php` with placeholders
-- Public Freemius key only after you understand it is public
-- Docs without live credentials
-
-## Checklist
-
-- [ ] `LOCAL.md` has no live keys
-- [ ] `config/licensing.php` is gitignored
-- [ ] Production uses HTTPS
-- [ ] Rotate any keys that were ever pasted into chat or git history
+Rotate any credential that was ever pasted into chat, tickets, or git history.

@@ -39,7 +39,7 @@ final class Plug_One_Plugin {
 	}
 
 	/**
-	 * Cleanup on delete (Freemius after_uninstall — do not use uninstall.php).
+	 * Cleanup on plugin delete.
 	 */
 	public static function uninstall() {
 		global $wpdb;
@@ -47,7 +47,6 @@ final class Plug_One_Plugin {
 		delete_option( 'woocommerce_plug_one_mpesa_settings' );
 		delete_option( 'plug_one_db_version' );
 
-		// OAuth tokens are keyed by consumer key + env hash.
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
@@ -86,12 +85,9 @@ final class Plug_One_Plugin {
 		require_once PLUG_ONE_PATH . 'includes/class-logger.php';
 		require_once PLUG_ONE_PATH . 'includes/class-idempotency.php';
 		require_once PLUG_ONE_PATH . 'includes/class-callback-payload.php';
-		require_once PLUG_ONE_PATH . 'includes/class-licensing.php';
+		require_once PLUG_ONE_PATH . 'includes/class-config.php';
 		require_once PLUG_ONE_PATH . 'includes/class-transactions.php';
-		// Premium-only (stripped from WordPress.org free ZIP via @fs_premium_only).
-		if ( file_exists( PLUG_ONE_PATH . 'includes/class-daraja-client.php' ) ) {
-			require_once PLUG_ONE_PATH . 'includes/class-daraja-client.php';
-		}
+		require_once PLUG_ONE_PATH . 'includes/class-daraja-client.php';
 		require_once PLUG_ONE_PATH . 'includes/class-order-service.php';
 		require_once PLUG_ONE_PATH . 'includes/class-callback.php';
 		require_once PLUG_ONE_PATH . 'includes/class-gateway.php';
@@ -116,7 +112,7 @@ final class Plug_One_Plugin {
 		}
 		add_action( 'plug_one_query_stk', array( 'Plug_One_Order_Service', 'query_and_update' ) );
 
-		Plug_One_Licensing::init();
+		Plug_One_Config::init();
 		Plug_One_Callback::init();
 		Plug_One_REST::init();
 		Plug_One_Admin_Order::init();

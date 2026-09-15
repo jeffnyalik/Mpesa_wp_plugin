@@ -1,3 +1,0 @@
-# Optional reply if withdrawing WordPress.org submission
-
-Thanks for the review. I’m pausing the WordPress.org directory submission for now and will distribute the plugin as open source on GitHub plus Freemius for free/Pro packages. Please close or withdraw this submission.

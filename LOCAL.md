@@ -15,11 +15,7 @@ Docker stack for testing Plug One against WooCommerce.
 
 Opens **http://localhost:8080** (admin / admin), installs WooCommerce, activates this plugin, sets **KES**.
 
-PHP upload limit is raised via `docker/uploads.ini` (64M) so Freemius plugin ZIPs can be uploaded in WP Admin. After changing it:
-
-```bash
-sudo docker compose up -d wordpress
-```
+PHP upload limit is raised via `docker/uploads.ini` (64M) for plugin ZIP uploads.
 
 ```bash
 docker compose up -d
@@ -30,9 +26,9 @@ docker compose down -v       # wipe DB
 
 ## Configure the gateway
 
-1. WooCommerce → Settings → Payments → **Plug One M-Pesa**
-2. Enable · Environment **Sandbox** · Transaction type **Paybill**
-3. Paste your own Daraja sandbox credentials (Consumer key/secret, passkey)
+1. WooCommerce → Settings → Payments → **Plug One Payment Gateway for M-Pesa**
+2. Enable · Environment **Sandbox** · Mode **STK Push** or **Manual**
+3. Paste Daraja sandbox credentials for STK
 4. Shortcode / Party B: `174379` (public Safaricom sandbox Paybill)
 5. Callback override (with ngrok):
 
@@ -42,19 +38,7 @@ https://YOUR-SUBDOMAIN.ngrok-free.app/wc-api/plug_one_mpesa/
 
 6. **Test Daraja credentials**, then checkout a product
 
-Do **not** commit real keys. Use environment variables or the WP admin UI only.
-
-### Example sandbox field mapping (values from your Daraja app)
-
-| Gateway field | Typical sandbox |
-|---|---|
-| Environment | Sandbox |
-| Transaction type | Paybill (`CustomerPayBillOnline`) |
-| Shortcode | `174379` |
-| Party B | `174379` |
-| Callback | `https://…/wc-api/plug_one_mpesa/` |
-
-Till / Buy Goods needs a real Till after go-live — there is no public Till STK sandbox like `174379`.
+Do **not** commit real keys.
 
 ## Callbacks
 
@@ -62,42 +46,8 @@ Till / Buy Goods needs a real Till after go-live — there is no public Till STK
 ngrok http 8080
 ```
 
-Path must include **`/wc-api/`**. Nest’s `/Bsing/mpesa/callback` is a different app.
-
-Paid physical products end as **Processing** (normal WooCommerce). That means payment succeeded.
-
-## Licensing (Freemius)
-
-1. `composer install` in this folder (installs `freemius/wordpress-sdk` into `vendor/`)
-2. Add to **WordPress** `wp-config.php` (not this repo):
-
-```php
-define( 'WP_FS__DEV_MODE', true );
-define( 'WP_FS__SKIP_EMAIL_ACTIVATION', true );
-define( 'WP_FS__plug-one-payment-gateway-m-pesa_SECRET_KEY', 'sk_…' ); // from Freemius dashboard
-```
-
-3. Reactivate the plugin → activate a Freemius test license
-4. Optional: `config/licensing.example.php` → `config/licensing.php` for support email
-
-See `docs/licensing.md`. **Never commit the secret key.**
-
+Path must include **`/wc-api/`**.
 
 ## Docs & support in WP
 
 **WooCommerce → Plug One Help**
-
-Markdown docs live in `/docs` (publish to your site and set `PLUG_ONE_DOCS_URL`).
-
-## Production Till
-
-Follow `docs/production-till.md` when you have a real Till (not sandbox `174379`).
-
-
-## Useful URLs
-
-| What | URL |
-|---|---|
-| Store | http://localhost:8080 |
-| Admin | http://localhost:8080/wp-admin |
-| Logs | WooCommerce → Status → Logs → `plug-one-mpesa` |

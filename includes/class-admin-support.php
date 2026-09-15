@@ -38,12 +38,9 @@ class Plug_One_Admin_Support {
 	}
 
 	public static function render() {
-		$email   = Plug_One_Licensing::config( 'support_email', 'jeffnyak@gmail.com' );
-		$phone   = Plug_One_Licensing::config( 'support_phone', '0716431039' );
-		$docs    = Plug_One_Licensing::config( 'docs_url', '' );
-		$pricing = Plug_One_Licensing::pricing_url();
-		$pro     = Plug_One_Licensing::can_use_pro();
-		$fs_on   = Plug_One_Licensing::is_freemius_configured();
+		$email = Plug_One_Config::get( 'support_email', 'jeffnyak@gmail.com' );
+		$phone = Plug_One_Config::get( 'support_phone', '0716431039' );
+		$docs  = Plug_One_Config::get( 'docs_url', '' );
 
 		$local_docs = PLUG_ONE_URL . 'docs/';
 
@@ -51,33 +48,20 @@ class Plug_One_Admin_Support {
 		echo '<h1>' . esc_html__( 'Plug One — Docs & support', 'plug-one-payment-gateway-m-pesa' ) . '</h1>';
 
 		echo '<div class="plug-one-admin-panel" style="max-width:720px;margin-top:1rem;">';
-		echo '<h2>' . esc_html__( 'License', 'plug-one-payment-gateway-m-pesa' ) . '</h2>';
-		$is_premium_pkg = function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only();
-		if ( $is_premium_pkg && $pro ) {
-			echo '<p><span class="plug-one-ok">' . esc_html__( 'Pro license active — STK Push enabled.', 'plug-one-payment-gateway-m-pesa' ) . '</span></p>';
-		} elseif ( $is_premium_pkg ) {
-			echo '<p>' . esc_html__( 'This is the Pro package. Activate a license to use STK Push.', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
-		} else {
-			echo '<p>' . esc_html__( 'This free package supports Manual Paybill/Till. Get the Pro package for Daraja STK Push.', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
-		}
-		if ( $fs_on && $pricing ) {
-			echo '<p><a class="button button-primary" href="' . esc_url( $pricing ) . '">' . esc_html__( 'Upgrade / activate license', 'plug-one-payment-gateway-m-pesa' ) . '</a></p>';
-		} elseif ( ! $fs_on ) {
-			echo '<p class="description">' . esc_html__( 'Freemius SDK not loaded. Run composer install in the plugin folder for upgrades.', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
-		}
+		echo '<h2>' . esc_html__( 'Open source', 'plug-one-payment-gateway-m-pesa' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Manual Paybill/Till and Daraja STK Push are included. Source:', 'plug-one-payment-gateway-m-pesa' ) . ' <a href="https://github.com/jeffnyalik/Mpesa_wp_plugin" target="_blank" rel="noopener noreferrer">GitHub</a></p>';
 		echo '</div>';
 
 		echo '<div class="plug-one-admin-panel" style="max-width:720px;margin-top:1rem;">';
 		echo '<h2>' . esc_html__( 'Documentation', 'plug-one-payment-gateway-m-pesa' ) . '</h2>';
 		if ( ! $docs ) {
-			echo '<p class="description">' . esc_html__( 'Using bundled docs in the plugin (no public website required).', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Using bundled docs in the plugin.', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
 		}
 		echo '<ul style="list-style:disc;margin-left:1.25rem;">';
 		self::doc_link( __( 'Getting started', 'plug-one-payment-gateway-m-pesa' ), $docs ? trailingslashit( $docs ) . 'getting-started/' : $local_docs . 'getting-started.md' );
 		self::doc_link( __( 'Paybill vs Till', 'plug-one-payment-gateway-m-pesa' ), $docs ? trailingslashit( $docs ) . 'paybill-vs-till/' : $local_docs . 'paybill-vs-till.md' );
 		self::doc_link( __( 'Callbacks & ngrok', 'plug-one-payment-gateway-m-pesa' ), $docs ? trailingslashit( $docs ) . 'callbacks/' : $local_docs . 'callbacks.md' );
 		self::doc_link( __( 'Production Till checklist', 'plug-one-payment-gateway-m-pesa' ), $docs ? trailingslashit( $docs ) . 'production-till/' : $local_docs . 'production-till.md' );
-		self::doc_link( __( 'Licensing & updates', 'plug-one-payment-gateway-m-pesa' ), $docs ? trailingslashit( $docs ) . 'licensing/' : $local_docs . 'licensing.md' );
 		self::doc_link( __( 'Troubleshooting', 'plug-one-payment-gateway-m-pesa' ), $docs ? trailingslashit( $docs ) . 'troubleshooting/' : $local_docs . 'troubleshooting.md' );
 		echo '</ul>';
 		echo '</div>';
@@ -94,7 +78,6 @@ class Plug_One_Admin_Support {
 			echo '<p><a class="button" href="tel:+' . esc_attr( $tel ) . '">' . esc_html( $phone ) . '</a></p>';
 			echo '<p class="description">' . esc_html__( 'WhatsApp / call (Kenya). Prefer email for logs and screenshots.', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
 		}
-		echo '<p class="description">' . esc_html__( 'Typical response within 1–2 business days for Pro licenses.', 'plug-one-payment-gateway-m-pesa' ) . '</p>';
 		echo '</div>';
 
 		echo '</div>';

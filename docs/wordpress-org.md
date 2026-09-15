@@ -1,24 +1,12 @@
-# Distribution notes (GitHub + Freemius)
+# Distribution
 
-Primary distribution is **GitHub (open source)** + **Freemius** (free/Pro ZIPs and licenses).
+Primary distribution: **GitHub (open source)**.
 
-WordPress.org directory review is **paused** (slow freemium review cycle). You can resume later using Freemius’s generated free ZIP.
+- Repo: https://github.com/jeffnyalik/Mpesa_wp_plugin
+- Package ZIP: `./bin/package-release.sh`
 
-## Public GitHub checklist
+## WordPress.org
 
-1. Push latest `master` to `https://github.com/jeffnyalik/Mpesa_wp_plugin`
-2. On GitHub: **Settings → General → Danger Zone → Change repository visibility → Public**
-3. Optional: rename the repo to `plug-one-payment-gateway-m-pesa` (update Plugin URI if you do)
-4. Share README install + Freemius links
+Directory listing is optional. A previous freemium submission was paused. If you withdraw:
 
-## Freemius
-
-- Free: https://checkout.freemius.com/plugin/39188/plan/65728/
-- Pro: https://checkout.freemius.com/plugin/39188/plan/65736/
-- Package: `./bin/package-for-freemius.sh`
-
-## If you withdraw the WordPress.org submission
-
-Reply on the existing review thread (short):
-
-> Thanks for the review. I’m pausing the WordPress.org directory submission for now and will distribute via GitHub (open source) and Freemius. Please close / withdraw this submission.
+> Thanks for the review. I’m withdrawing the WordPress.org submission and distributing the plugin as fully open source on GitHub. Please close this submission.

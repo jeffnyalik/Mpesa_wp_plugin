@@ -19,7 +19,7 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 	public function __construct() {
 		$this->id                 = PLUG_ONE_GATEWAY_ID;
 		$this->method_title       = __( 'Plug One Payment Gateway for M-Pesa', 'plug-one-payment-gateway-m-pesa' );
-		$this->method_description = __( 'Accept M-Pesa via Manual Paybill/Till. Optional Pro add-on adds Daraja STK Push.', 'plug-one-payment-gateway-m-pesa' );
+		$this->method_description = __( 'Accept M-Pesa via Manual Paybill/Till or Daraja STK Push.', 'plug-one-payment-gateway-m-pesa' );
 		$this->has_fields         = true;
 		$this->icon               = '';
 		$this->supports           = array( 'products' );
@@ -38,55 +38,32 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 	}
 
 	public function init_form_fields() {
-		$fields = array(
-			'enabled'      => array(
+		$this->form_fields = array(
+			'enabled'           => array(
 				'title'   => __( 'Enable/Disable', 'plug-one-payment-gateway-m-pesa' ),
 				'type'    => 'checkbox',
 				'label'   => __( 'Enable Plug One Payment Gateway for M-Pesa', 'plug-one-payment-gateway-m-pesa' ),
 				'default' => 'no',
 			),
-			'title'        => array(
+			'title'             => array(
 				'title'       => __( 'Title', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'text',
 				'description' => __( 'Payment method name at checkout.', 'plug-one-payment-gateway-m-pesa' ),
 				'default'     => __( 'M-Pesa', 'plug-one-payment-gateway-m-pesa' ),
 				'desc_tip'    => true,
 			),
-			'description'  => array(
+			'description'       => array(
 				'title'   => __( 'Description', 'plug-one-payment-gateway-m-pesa' ),
 				'type'    => 'textarea',
-				'default' => __( 'Pay with M-Pesa using the Paybill/Till shown at checkout.', 'plug-one-payment-gateway-m-pesa' ),
+				'default' => __( 'Pay with M-Pesa. You may receive a PIN prompt or use the Paybill/Till shown at checkout.', 'plug-one-payment-gateway-m-pesa' ),
 			),
-			'instructions' => array(
+			'instructions'      => array(
 				'title'       => __( 'Instructions', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'textarea',
 				'description' => __( 'Shown on the thank-you page and in emails for manual payments.', 'plug-one-payment-gateway-m-pesa' ),
 				'default'     => __( 'Complete the M-Pesa payment to finish this order.', 'plug-one-payment-gateway-m-pesa' ),
 			),
-			'payment_mode' => array(
-				'title'       => __( 'Payment mode', 'plug-one-payment-gateway-m-pesa' ),
-				'type'        => 'select',
-				'description' => __( 'Manual shows your Paybill/Till and waits for you to confirm payment.', 'plug-one-payment-gateway-m-pesa' ),
-				'default'     => 'manual',
-				'options'     => array(
-					'manual' => __( 'Manual Paybill / Till', 'plug-one-payment-gateway-m-pesa' ),
-				),
-			),
-			'shortcode'    => array(
-				'title'       => __( 'Paybill / shortcode', 'plug-one-payment-gateway-m-pesa' ),
-				'type'        => 'text',
-				'description' => __( 'Shown to customers for Manual payments (and used as BusinessShortCode for Pro STK).', 'plug-one-payment-gateway-m-pesa' ),
-			),
-			'party_b'      => array(
-				'title'       => __( 'Till / Party B (optional)', 'plug-one-payment-gateway-m-pesa' ),
-				'type'        => 'text',
-				'description' => __( 'If set, shown instead of the shortcode for Manual Paybill/Till.', 'plug-one-payment-gateway-m-pesa' ),
-			),
-		);
-
-		// Freemius strips this block from the WordPress.org free ZIP.
-		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only() ) {
-			$fields['payment_mode'] = array(
+			'payment_mode'      => array(
 				'title'       => __( 'Payment mode', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'select',
 				'description' => __( 'STK Push sends a PIN prompt. Manual shows your Paybill/Till and waits for you to confirm.', 'plug-one-payment-gateway-m-pesa' ),
@@ -95,8 +72,8 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 					'stk'    => __( 'STK Push (automated)', 'plug-one-payment-gateway-m-pesa' ),
 					'manual' => __( 'Manual Paybill / Till', 'plug-one-payment-gateway-m-pesa' ),
 				),
-			);
-			$fields['environment']      = array(
+			),
+			'environment'       => array(
 				'title'   => __( 'Daraja environment', 'plug-one-payment-gateway-m-pesa' ),
 				'type'    => 'select',
 				'default' => 'sandbox',
@@ -104,8 +81,8 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 					'sandbox'    => __( 'Sandbox (testing)', 'plug-one-payment-gateway-m-pesa' ),
 					'production' => __( 'Production (live)', 'plug-one-payment-gateway-m-pesa' ),
 				),
-			);
-			$fields['transaction_type'] = array(
+			),
+			'transaction_type'  => array(
 				'title'       => __( 'Transaction type', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'select',
 				'description' => __( 'Buy Goods uses your Till as Party B. Paybill uses CustomerPayBillOnline.', 'plug-one-payment-gateway-m-pesa' ),
@@ -114,30 +91,38 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 					'CustomerPayBillOnline'  => __( 'Paybill (CustomerPayBillOnline)', 'plug-one-payment-gateway-m-pesa' ),
 					'CustomerBuyGoodsOnline' => __( 'Buy Goods / Till (CustomerBuyGoodsOnline)', 'plug-one-payment-gateway-m-pesa' ),
 				),
-			);
-			$fields['consumer_key']    = array(
+			),
+			'consumer_key'      => array(
 				'title' => __( 'Consumer key', 'plug-one-payment-gateway-m-pesa' ),
 				'type'  => 'text',
-			);
-			$fields['consumer_secret'] = array(
+			),
+			'consumer_secret'   => array(
 				'title'       => __( 'Consumer secret', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'password',
 				'description' => __( 'Leave blank to keep the current secret.', 'plug-one-payment-gateway-m-pesa' ),
-			);
-			$fields['passkey']         = array(
+			),
+			'shortcode'         => array(
+				'title'       => __( 'Business shortcode / Paybill', 'plug-one-payment-gateway-m-pesa' ),
+				'type'        => 'text',
+				'description' => __( 'Daraja BusinessShortCode; also shown for Manual mode if Party B is empty.', 'plug-one-payment-gateway-m-pesa' ),
+			),
+			'party_b'           => array(
+				'title'       => __( 'Party B (Till / Paybill)', 'plug-one-payment-gateway-m-pesa' ),
+				'type'        => 'text',
+				'description' => __( 'Where funds land. For Buy Goods this is your Till. Leave blank to use the shortcode.', 'plug-one-payment-gateway-m-pesa' ),
+			),
+			'passkey'           => array(
 				'title'       => __( 'Lipa Na M-Pesa Online passkey', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'password',
 				'description' => __( 'Leave blank to keep the current passkey.', 'plug-one-payment-gateway-m-pesa' ),
-			);
-			$fields['callback_url']    = array(
+			),
+			'callback_url'      => array(
 				'title'       => __( 'Callback URL override', 'plug-one-payment-gateway-m-pesa' ),
 				'type'        => 'text',
 				'description' => __( 'Optional. Leave blank to use the built-in WC-API URL. Must be public HTTPS in production.', 'plug-one-payment-gateway-m-pesa' ),
 				'placeholder' => Plug_One_Callback::url(),
-			);
-		}
-
-		$this->form_fields = $fields;
+			),
+		);
 	}
 
 	public function admin_options() {
@@ -145,22 +130,16 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 		echo wp_kses_post( wpautop( $this->method_description ) );
 
 		echo '<div class="plug-one-admin-panel">';
-		echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=plug-one-support' ) ) . '">' . esc_html__( 'Docs, license & support →', 'plug-one-payment-gateway-m-pesa' ) . '</a></p>';
-
-		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->is__premium_only() ) {
-			echo '<h3>' . esc_html__( 'Callback URLs (register these in the Daraja portal)', 'plug-one-payment-gateway-m-pesa' ) . '</h3>';
-			echo '<p><code>' . esc_html( Plug_One_Callback::url() ) . '</code></p>';
-			echo '<p class="description">' . esc_html__( 'REST fallback:', 'plug-one-payment-gateway-m-pesa' ) . ' <code>' . esc_html( Plug_One_Callback::rest_url() ) . '</code></p>';
-			if ( class_exists( 'Plug_One_Daraja_Client' ) ) {
-				echo '<p><button type="button" class="button" id="plug-one-test-connection">' . esc_html__( 'Test Daraja credentials', 'plug-one-payment-gateway-m-pesa' ) . '</button> <span id="plug-one-test-result"></span></p>';
-			}
-			if ( ! is_ssl() && 'production' === $this->get_option( 'environment' ) ) {
-				echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Production STK Push requires HTTPS. Safaricom will reject HTTP callback URLs.', 'plug-one-payment-gateway-m-pesa' ) . '</p></div>';
-			}
-		}
-
+		echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=plug-one-support' ) ) . '">' . esc_html__( 'Docs & support →', 'plug-one-payment-gateway-m-pesa' ) . '</a></p>';
+		echo '<h3>' . esc_html__( 'Callback URLs (register these in the Daraja portal)', 'plug-one-payment-gateway-m-pesa' ) . '</h3>';
+		echo '<p><code>' . esc_html( Plug_One_Callback::url() ) . '</code></p>';
+		echo '<p class="description">' . esc_html__( 'REST fallback:', 'plug-one-payment-gateway-m-pesa' ) . ' <code>' . esc_html( Plug_One_Callback::rest_url() ) . '</code></p>';
+		echo '<p><button type="button" class="button" id="plug-one-test-connection">' . esc_html__( 'Test Daraja credentials', 'plug-one-payment-gateway-m-pesa' ) . '</button> <span id="plug-one-test-result"></span></p>';
 		if ( 'KES' !== get_woocommerce_currency() ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Store currency is not KES. This gateway will stay hidden at checkout until currency is Kenyan Shilling.', 'plug-one-payment-gateway-m-pesa' ) . '</p></div>';
+		}
+		if ( ! is_ssl() && 'production' === $this->get_option( 'environment' ) ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Production STK Push requires HTTPS. Safaricom will reject HTTP callback URLs.', 'plug-one-payment-gateway-m-pesa' ) . '</p></div>';
 		}
 		if ( '' === (string) get_option( 'permalink_structure' ) ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Pretty permalinks should be enabled so callback URLs work reliably.', 'plug-one-payment-gateway-m-pesa' ) . '</p></div>';
@@ -264,9 +243,9 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( Plug_One_Order_Service::META_PHONE, $phone );
 		$order->save();
 
-		$mode = $this->get_option( 'payment_mode', 'manual' );
+		$mode = $this->get_option( 'payment_mode', 'stk' );
 
-		if ( 'manual' === $mode || 'stk' !== $mode ) {
+		if ( 'manual' === $mode ) {
 			$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'pending' );
 			$order->update_status(
 				'on-hold',
@@ -283,48 +262,37 @@ class Plug_One_Gateway extends WC_Payment_Gateway {
 			);
 		}
 
-		// Freemius strips STK initiation from the WordPress.org free ZIP.
-		if ( function_exists( 'polnmp_fs' ) && is_object( polnmp_fs() ) && polnmp_fs()->can_use_premium_code__premium_only() ) {
-			if ( ! class_exists( 'Plug_One_Daraja_Client' ) ) {
-				wc_add_notice( __( 'STK Push is not available in this installation.', 'plug-one-payment-gateway-m-pesa' ), 'error' );
-				return array( 'result' => 'failure' );
-			}
-
-			$amount = Plug_One_Order_Service::order_amount( $order );
-			if ( $amount < 1 ) {
-				wc_add_notice( __( 'M-Pesa amount must be at least KES 1.', 'plug-one-payment-gateway-m-pesa' ), 'error' );
-				return array( 'result' => 'failure' );
-			}
-
-			try {
-				$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
-				$order->update_status(
-					'pending',
-					$result['customer_message']
-				);
-				WC()->cart->empty_cart();
-				return array(
-					'result'   => 'success',
-					'redirect' => $this->get_return_url( $order ),
-				);
-			} catch ( Exception $e ) {
-				$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'failed' );
-				$order->update_status( 'failed', $e->getMessage() );
-				Plug_One_Logger::log(
-					'payment_stk_failed',
-					array(
-						'orderId' => $order_id,
-						'phone'   => $phone,
-						'error'   => $e->getMessage(),
-					)
-				);
-				wc_add_notice( __( 'Could not start M-Pesa payment. Please try again or contact the store.', 'plug-one-payment-gateway-m-pesa' ), 'error' );
-				return array( 'result' => 'failure' );
-			}
+		$amount = Plug_One_Order_Service::order_amount( $order );
+		if ( $amount < 1 ) {
+			wc_add_notice( __( 'M-Pesa amount must be at least KES 1.', 'plug-one-payment-gateway-m-pesa' ), 'error' );
+			return array( 'result' => 'failure' );
 		}
 
-		wc_add_notice( __( 'STK Push requires the Pro plugin. Use Manual mode or upgrade.', 'plug-one-payment-gateway-m-pesa' ), 'error' );
-		return array( 'result' => 'failure' );
+		try {
+			$result = Plug_One_Order_Service::initiate_stk( $order, $phone );
+			$order->update_status(
+				'pending',
+				$result['customer_message']
+			);
+			WC()->cart->empty_cart();
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $order ),
+			);
+		} catch ( Exception $e ) {
+			$order->update_meta_data( Plug_One_Order_Service::META_STATUS, 'failed' );
+			$order->update_status( 'failed', $e->getMessage() );
+			Plug_One_Logger::log(
+				'payment_stk_failed',
+				array(
+					'orderId' => $order_id,
+					'phone'   => $phone,
+					'error'   => $e->getMessage(),
+				)
+			);
+			wc_add_notice( __( 'Could not start M-Pesa payment. Please try again or contact the store.', 'plug-one-payment-gateway-m-pesa' ), 'error' );
+			return array( 'result' => 'failure' );
+		}
 	}
 
 	public function thankyou_instructions( $order_id ) {

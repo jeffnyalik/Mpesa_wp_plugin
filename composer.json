@@ -1,19 +1,13 @@
 {
 	"name": "plug-one/mpesa-woocommerce",
-	"description": "Lipa Na M-Pesa STK Push gateway for WooCommerce",
+	"description": "M-Pesa payment gateway for WooCommerce (Manual + Daraja STK Push)",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",
 	"require": {
-		"php": ">=7.4",
-		"freemius/wordpress-sdk": "^2.12"
+		"php": ">=7.4"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^9.6"
-	},
-	"config": {
-		"allow-plugins": {
-			"freemius/wordpress-sdk": true
-		}
 	},
 	"autoload-dev": {
 		"psr-4": {

@@ -7,7 +7,7 @@
 | Callback loops in ngrok | URL must include `/wc-api/plug_one_mpesa/` and return 200 JSON. |
 | Order is Processing after pay | Success for physical products. |
 | Order stuck Pending | Callback unreachable; use Query status; verify HTTPS / ngrok. |
-| STK option missing / forced manual | Activate Pro license (or Freemius not configured → unlocked in dev). |
+| STK option missing / forced manual | Set Payment mode to STK Push and save Daraja credentials. |
 | Gateway hidden at checkout | Currency must be KES; enable gateway; for STK need API credentials. |
 | `sendmail: not found` in Docker | Ignore — emails only; payments still work. |
 
